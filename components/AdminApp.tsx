@@ -130,8 +130,7 @@ export function AdminApp() {
     {id:'pol',i:Icons.file,l:'Reward Policy'},
     {id:'imeis',i:Icons.ph,l:'IMEI'},
     {id:'rws',i:Icons.gift,l:'Rewards'},
-    {id:'rpt',i:Icons.bar,l:'Reports'},
-    {id:'log',i:Icons.cn,l:'Audit Log'}
+    {id:'rpt',i:Icons.bar,l:'Reports'}
   ];
 
   const handleAction = (a: string, data?: any) => {
@@ -141,11 +140,7 @@ export function AdminApp() {
     else if (a === 'excel') { setMo('excel'); setXTgts([]); }
     else if (a === 'apply-excel') {
       updateDb((prev: any) => {
-         const db = JSON.parse(JSON.stringify(prev));
-         if (!db.adminLog) db.adminLog = [];
-         db.adminLog = [{id: uid(), dt: td(), act: 'Bulk Target Upload', det: `Targets updated for ${xTgts.length} managers via Excel`}, ...db.adminLog];
-         
-         const nmgrs = db.mgrs.map((m: any) => {
+         const nmgrs = prev.mgrs.map((m: any) => {
             const uploaded = xTgts.find(t => t.mgrId === m.id);
             if (uploaded) {
                const newTargets = { ...(m.targets || {}) };
@@ -156,8 +151,7 @@ export function AdminApp() {
             }
             return m;
          });
-         db.mgrs = nmgrs;
-         return db;
+         return { ...prev, mgrs: nmgrs };
       });
       setMo(''); showToast('Targets updated from Excel!'); setXTgts([]);
     }
@@ -173,14 +167,10 @@ export function AdminApp() {
       setMo('at');
     }
     else if (a === 'st') {
-      updateDb((prev: any) => {
-        const db = JSON.parse(JSON.stringify(prev));
-        if (!db.adminLog) db.adminLog = [];
-        const m = db.mgrs.find((m:any)=>m.id===md.mid);
-        db.adminLog = [{id: uid(), dt: td(), act: 'Update Target', det: `Manual target update for ${m?.nm || 'Manager'}`}, ...db.adminLog];
-        db.mgrs = db.mgrs.map((m: any) => m.id === md.mid ? { ...m, targets: tgtValues } : m);
-        return db;
-      });
+      updateDb((prev: any) => ({
+        ...prev,
+        mgrs: prev.mgrs.map((m: any) => m.id === md.mid ? { ...m, targets: tgtValues } : m)
+      }));
       setMo(''); showToast('Targets Updated!');
     }
     else if (a === 'start-pol') {
@@ -189,13 +179,7 @@ export function AdminApp() {
       setMo('edit-pol');
     }
     else if (a === 'save-pol') {
-      updateDb((prev: any) => {
-        const db = JSON.parse(JSON.stringify(prev));
-        if (!db.adminLog) db.adminLog = [];
-        db.adminLog = [{id: uid(), dt: td(), act: 'Update Policy', det: `Reward points policy updated`}, ...db.adminLog];
-        db.policy = JSON.parse(JSON.stringify(ePol));
-        return db;
-      });
+      updateDb((prev: any) => ({ ...prev, policy: JSON.parse(JSON.stringify(ePol)) }));
       setMo(''); showToast('Policy Updated!');
       setEPol(null);
     }
@@ -204,9 +188,6 @@ export function AdminApp() {
       if (!v || !pr) return;
       updateDb((prev: any) => {
         const db = { ...prev };
-        if (!db.adminLog) db.adminLog = [];
-        const mg = db.mgrs.find((m:any) => m.id === md.mid);
-        db.adminLog = [{id: uid(), dt: td(), act: 'Give Points', det: `${v > 0 ? 'Added' : 'Removed'} ${Math.abs(v)} pts to ${mg?.nm}. Reason: ${pr}`}, ...db.adminLog];
         db.mgrs = db.mgrs.map((m: any) => m.id === md.mid ? { ...m, pts: m.pts + v } : m);
         db.tx = [{ id: 'T' + uid(), mid: md.mid, tp: v > 0 ? 'credit' : 'debit', pt: Math.abs(v), rs: pr, dt: td(), by: 'Admin' }, ...db.tx];
         return db;
@@ -217,33 +198,27 @@ export function AdminApp() {
       if (!nn || !np || !ns) return;
       const tgts: any = {};
       state.db.models.forEach((m: any) => { tgts[m.id] = { tgt: Math.floor(Math.random() * 30) + 15, ach: 0 }; });
-      updateDb((prev: any) => {
-        const db = JSON.parse(JSON.stringify(prev));
-        if (!db.adminLog) db.adminLog = [];
-        db.adminLog = [{id: uid(), dt: td(), act: 'Add Manager', det: `New manager ${nn} added in ${na || 'Ahmedabad'}`}, ...db.adminLog];
-        db.mgrs = [...db.mgrs, {
+      updateDb((prev: any) => ({
+        ...prev,
+        mgrs: [...prev.mgrs, {
           id: 'M' + uid(), nm: nn, ph: np, store: ns, pts: 0, st: 'active',
           av: nn.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase(),
           area: na || 'Ahmedabad', targets: tgts, imeis: [], totalImei: 0, pendingImei: 0, 
           approvedImei: 0, streak: 0, avClr: '#3498db'
-        }];
-        return db;
-      });
+        }]
+      }));
       setMo(''); showToast('Added!'); setNn(''); setNp(''); setNs('');
     }
     else if (a === 'sr') {
       const pp = parseInt(rp); const ss = parseInt(rs);
       if (!rn || !pp || !ss) return;
-      updateDb((prev: any) => {
-        const db = JSON.parse(JSON.stringify(prev));
-        if (!db.adminLog) db.adminLog = [];
-        db.adminLog = [{id: uid(), dt: td(), act: 'Add Reward', det: `New reward ${rn} added in ${rc} category`}, ...db.adminLog];
-        db.rw = [...db.rw, {
+      updateDb((prev: any) => ({
+        ...prev,
+        rw: [...prev.rw, {
           id: 'B' + uid(), nm: rn, ct: rc, pt: pp, sk: ss, ic: '🎁', 
           bg: 'linear-gradient(135deg,#2a2a4a,#1a1a3a)', ds: 'Gift card', dm: [pp * 2], tg: null
-        }];
-        return db;
-      });
+        }]
+      }));
       setMo(''); showToast('Reward added!'); setRn(''); setRp(''); setRs('');
     }
     else if (a === 'do-excel') {
@@ -283,8 +258,6 @@ export function AdminApp() {
        const isEdit = md && md.id;
        updateDb((prev: any) => {
          const db = { ...prev };
-         if (!db.adminLog) db.adminLog = [];
-         db.adminLog = [{id: uid(), dt: td(), act: isEdit ? 'Edit Model' : 'Add Model', det: `${mdNm} Model ${isEdit ? 'updated' : 'added to system'}`}, ...db.adminLog];
          if (isEdit) {
            db.models = db.models.map((m: any) => m.id === md.id ? { ...m, nm: mdNm, ic: mdIc || '📱' } : m);
          } else {
@@ -823,7 +796,7 @@ export function AdminApp() {
             Want to add company-wise rewards (like Amazon, Flipkart vouchers) automatically? You can integrate third-party voucher APIs here.
           </p>
           <ul className="text-xs text-t3 space-y-2 list-disc pl-4">
-            <li><strong>Manual Distribution:</strong> Add generic rewards above (e.g. &quot;Gift Card&quot;). When managers redeem, you manually contact the reward vendor and send the employee the codes.</li>
+            <li><strong>Manual Distribution:</strong> Add generic rewards above (e.g. "Gift Card"). When managers redeem, you manually contact the reward vendor and send the employee the codes.</li>
             <li><strong>Automated API Setup:</strong> Connect Gyftr/Xoxoday APIs. When managers redeem points, the API is triggered on the backend to dynamically fetch a digital voucher and deliver it via SMS or email instantly.</li>
           </ul>
         </div>
@@ -986,42 +959,6 @@ export function AdminApp() {
     );
   };
 
-  const renderLog = () => {
-    const logs = (state.db as any).adminLog || [];
-    return (
-      <div className="animate-[fi_0.2s]">
-        <div className="flex justify-between items-center mb-4 flex-wrap gap-[7px]">
-          <h1 className="text-xl font-extrabold text-tx">Audit Log</h1>
-          <p className="text-xs text-t3">History of admin updates</p>
-        </div>
-        <div className="bg-bg-sec border border-bd rounded-[14px] shadow-sh overflow-hidden">
-          {logs.length > 0 ? (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-sf border-b border-bd">
-                  <th className="p-3 text-[10px] font-bold text-t3 uppercase tracking-wider w-[120px]">Date/Time</th>
-                  <th className="p-3 text-[10px] font-bold text-t3 uppercase tracking-wider w-[140px]">Action</th>
-                  <th className="p-3 text-[10px] font-bold text-t3 uppercase tracking-wider">Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {logs.map((log: any, i: number) => (
-                  <tr key={log.id || i} className="border-b border-bd/50 hover:bg-sf/50 transition-colors">
-                    <td className="p-3 text-[11px] text-t2 font-mono whitespace-nowrap">{log.dt}</td>
-                    <td className="p-3 text-[11px] font-bold text-tx"><span className="bg-[rgba(255,255,255,0.05)] px-2 py-1 rounded-[6px] border border-bd">{log.act}</span></td>
-                    <td className="p-3 text-[12px] text-t2">{log.det}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="p-8 text-center text-t3 text-sm">No recent activity logged.</div>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="flex min-h-screen max-w-[1200px] mx-auto text-tx bg-bg-prime relative">
       <div className="w-[210px] bg-bg-sec border-r border-bd py-5 fixed h-screen overflow-y-auto flex-col hidden md:flex">
@@ -1052,14 +989,13 @@ export function AdminApp() {
         {at === 'rws' && renderRws()}
         {at === 'pol' && renderPol()}
         {at === 'rpt' && renderRpt()}
-        {at === 'log' && renderLog()}
       </div>
 
-      <div className="fixed bottom-0 left-0 w-full bg-[rgba(16,10,40,0.95)] border-t border-bd flex md:hidden p-[3px_0] pb-[max(7px,env(safe-area-inset-bottom))] z-[100] backdrop-blur-md overflow-x-auto hide-scrollbar">
-         {tabs.map(t => (
-           <button key={t.id} className={`flex-none min-w-[64px] flex flex-col items-center gap-px py-1.5 rounded-[9px] bg-transparent border-0 cursor-pointer relative transition-colors ${at === t.id ? 'text-or' : 'text-t3'}`} onClick={() => setAt(t.id)}>
+      <div className="fixed bottom-0 left-0 w-full bg-[rgba(16,10,40,0.95)] border-t border-bd flex md:hidden p-[3px_0] pb-[max(7px,env(safe-area-inset-bottom))] z-[100] backdrop-blur-md">
+         {tabs.slice(0,5).map(t => (
+           <button key={t.id} className={`flex-1 flex flex-col items-center gap-px py-1.5 rounded-[9px] bg-transparent border-0 cursor-pointer relative transition-colors ${at === t.id ? 'text-or' : 'text-t3'}`} onClick={() => setAt(t.id)}>
              <t.i className="w-[18px] h-[18px]" />
-             <span className="text-[7px] font-semibold tracking-wider">{t.l}</span>
+             <span className="text-[7px] font-semibold">{t.l}</span>
            </button>
          ))}
       </div>
