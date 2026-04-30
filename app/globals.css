@@ -1,0 +1,59 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --color-nv: #22223B;
+  --color-dg: #4A4E69;
+  --color-pg: #6E6A8E;
+  --color-or: #D28C55;
+  --color-lb: #9FA8DA;
+  --color-yl: #D4D86E;
+  
+  --color-bg-prime: var(--bg);
+  --color-bg-sec: var(--bg2);
+  --color-bg-ter: var(--bg3);
+  --color-sf: var(--sf);
+  --color-bd: var(--bd);
+  --color-bd2: var(--bd2);
+  
+  --color-tx: var(--tx);
+  --color-t2: var(--t2);
+  --color-t3: var(--t3);
+
+  --color-gold: #FFD700;
+  --color-silver: #C0C0C0;
+  --color-bronze: #CD7F32;
+}
+
+@layer base {
+  :root {
+    --bg: #100a28;
+    --bg2: #1a1040;
+    --bg3: #251a55;
+    --sf: rgba(255, 255, 255, 0.03);
+    --bd: rgba(255, 255, 255, 0.06);
+    --bd2: rgba(255, 255, 255, 0.1);
+    --tx: #ede8ff;
+    --t2: #9e96c0;
+    --t3: #5c5480;
+    --sh: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  [data-theme="light"] {
+    --bg: #F4F2EE;
+    --bg2: #FFF;
+    --bg3: #EBE8E2;
+    --sf: rgba(34, 34, 59, 0.03);
+    --bd: rgba(34, 34, 59, 0.08);
+    --bd2: rgba(34, 34, 59, 0.14);
+    --tx: #22223B;
+    --t2: #6E6A8E;
+    --t3: #9E9BB5;
+    --sh: 0 2px 12px rgba(34, 34, 59, 0.06);
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--tx);
+  }
+}
