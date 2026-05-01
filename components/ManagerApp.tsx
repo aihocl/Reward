@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useStore } from '@/lib/store';
-import { Icons } from './icons';
+import { Icons, HMPLLogo } from './icons';
 import { CTS, AREAS, TIERS, BADGES, FAQ, TERMS } from '@/lib/initial-data';
 import { uid, td } from '@/lib/utils';
 
@@ -10,6 +10,7 @@ export function ManagerApp() {
   const { state, updateDb, setTheme, logout } = useStore();
   const [tab, setTab] = useState('home');
   const [lbTab, setLbTab] = useState('area');
+  const [rwTb, setRwTb] = useState('inv');
   const [ct, setCt] = useState('All');
   const [imei, setImei] = useState('');
   const [selMod, setSelMod] = useState(state.db.models[0]?.id || '');
@@ -49,8 +50,8 @@ export function ManagerApp() {
       const db = { ...prev };
       db.mgrs = db.mgrs.map((x: any) => x.id === m.id ? { ...x, pts: x.pts - pn } : x);
       db.rw = db.rw.map((x: any) => x.id === b.id ? { ...x, sk: x.sk - 1 } : x);
-      db.tx = [{ id: 'T' + uid(), mid: m.id, tp: 'debit', pt: pn, rs: `Redeemed: ${b.nm} ₹${sd.toLocaleString()}`, dt: td(), by: 'System' }, ...db.tx];
-      db.rd = [{ id: 'R' + uid(), mid: m.id, rid: b.id, rnm: `${b.nm} ₹${sd.toLocaleString()}`, pt: pn, sts: 'pending', dt: td(), dn: sd }, ...db.rd];
+      db.tx = [{ id: 'T' + uid(), mid: m.id, tp: 'debit', pt: pn, rs: `Redeemed: ${(b as any).nm} ₹${sd.toLocaleString()}${(b as any).rx ? ` (Exp: ${(b as any).rx})` : ''}`, dt: td(), by: 'System' }, ...db.tx];
+      db.rd = [{ id: 'R' + uid(), mid: m.id, rid: b.id, rnm: `${b.nm} ₹${sd.toLocaleString()}`, rx: (b as any).rx, pt: pn, sts: 'pending', dt: td(), dn: sd }, ...db.rd];
       return db;
     });
     setSh(null);
@@ -81,6 +82,8 @@ export function ManagerApp() {
     setEpMo(false);
     showToast('Profile updated!');
   };
+
+  const [searchQ, setSearchQ] = useState('');
 
   const renderHome = () => {
     const tA = Object.values(m.targets || {}).reduce((s: any, t: any) => s + t.ach, 0) as number;
@@ -133,7 +136,36 @@ export function ManagerApp() {
           </div>
         </div>
 
-        <div className="flex justify-between items-center mb-2.5"><span className="text-[13px] font-extrabold">🎯 Model Targets</span></div>
+        <div className="flex justify-between items-center mb-2.5 mt-6"><span className="text-[13px] font-extrabold flex items-center gap-1.5 animate-pulse"><Icons.star className="w-3.5 h-3.5 text-lb" /> Series Trends</span></div>
+        <div className="flex overflow-x-auto gap-3 pb-2 mb-2 no-scrollbar">
+          {(() => {
+             const srStats: any = {};
+             state.db.models.forEach((mod: any) => {
+                if (!srStats[mod.sr]) srStats[mod.sr] = { sr: mod.sr, tT: 0, tA: 0 };
+                const dt = Object.assign({}, m.targets) as Record<string, any>;
+                const t = dt[mod.id] || { tgt: 0, ach: 0 };
+                srStats[mod.sr].tT += t.tgt;
+                srStats[mod.sr].tA += t.ach;
+             });
+             return Object.values(srStats).map((st: any, i: number) => {
+                const spct = st.tT ? Math.round((st.tA / st.tT) * 100) : 0;
+                return (
+                  <div key={i} className="min-w-[130px] bg-bg-sec border border-bd rounded-xl p-3 shrink-0 relative overflow-hidden shadow-sh">
+                     <p className="text-[11px] font-bold text-tx mb-2">{st.sr}</p>
+                     <div className="h-1.5 rounded-full bg-bd overflow-hidden mb-1.5">
+                       <div className="h-full bg-lb" style={{width: `${Math.min(spct, 100)}%`}}></div>
+                     </div>
+                     <div className="flex justify-between items-end">
+                        <span className="text-[10px] text-t3 font-mono">{st.tA} / {st.tT}</span>
+                        <span className={`text-[11px] font-bold font-mono ${spct >= 100 ? 'text-[#2ee89d]' : 'text-tx'}`}>{spct}%</span>
+                     </div>
+                  </div>
+                )
+             })
+          })()}
+        </div>
+
+        <div className="flex justify-between items-center mb-2.5 mt-2"><span className="text-[13px] font-extrabold">🎯 Model Targets</span></div>
         <div className="grid grid-cols-2 gap-3">
           {state.db.models.map((mod: any) => {
             const t = (m.targets || {} as Record<string, any>)[mod.id] || { tgt: 0, ach: 0 };
@@ -320,36 +352,64 @@ export function ManagerApp() {
 
   const renderRewards = () => {
     const fl = ct === 'All' ? state.db.rw : state.db.rw.filter((b: any) => b.ct === ct);
+    const myReds = (state.db.rd || []).filter((r: any) => r.mid === m.id);
     return (
       <>
         <h2 className="text-lg font-extrabold my-3.5 tracking-tight">Rewards</h2>
-        <div className="flex gap-1.5 overflow-x-auto pb-1.5 mb-2.5 no-scrollbar">
-          {CTS.map(c => (
-            <button key={c} className={`px-3 py-1.5 rounded-[18px] border-[1.5px] border-bd2 text-[10px] font-semibold whitespace-nowrap shrink-0 cursor-pointer ${ct === c ? 'bg-or border-or text-white' : 'bg-sf text-t2'}`} onClick={() => setCt(c)}>{c}</button>
-          ))}
+        <div className="flex gap-2 mb-4 bg-bg-sec p-1 rounded-[14px]">
+           <button className={`flex-1 py-2 text-xs font-bold rounded-[11px] cursor-pointer transition-colors border-0 ${rwTb === 'inv' ? 'bg-[#2ee89d] text-[#111] shadow-sm' : 'bg-transparent text-t2'}`} onClick={() => setRwTb('inv')}>Explore</button>
+           <button className={`flex-1 py-2 text-xs font-bold rounded-[11px] cursor-pointer transition-colors border-0 flex items-center justify-center gap-1.5 ${rwTb === 'red' ? 'bg-[#2ee89d] text-[#111] shadow-sm' : 'bg-transparent text-t2'}`} onClick={() => setRwTb('red')}>My Redemptions {myReds.length > 0 && <span className={`px-1.5 py-0.5 rounded-[5px] text-[8px] ${rwTb === 'red' ? 'bg-[#111] text-[#2ee89d]' : 'bg-[rgba(255,255,255,0.05)] text-t3'}`}>{myReds.length}</span>}</button>
         </div>
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          {fl.map((b: any) => (
-            <div key={b.id} className="bg-bg-sec border border-bd rounded-[13px] overflow-hidden cursor-pointer shadow-sh active:scale-95 transition-transform" onClick={() => { setSh(b.id); setDm(b.dm[0]); }}>
-              <div className="h-[76px] flex items-center justify-center text-[28px] relative" style={{ background: b.bg }}>
-                {b.tg && (
-                  <span className="absolute top-[5px] right-[5px] px-1.5 py-[2px] rounded-[5px] text-[7px] font-bold tracking-wider" 
-                        style={{ background: b.tg === 'hot' ? 'rgba(255,90,101,0.12)' : b.tg === 'new' ? 'rgba(29,212,232,0.1)' : 'rgba(212,216,110,.1)', color: b.tg === 'hot' ? '#ff5a65' : b.tg === 'new' ? '#1dd4e8' : 'var(--color-brand-yl)' }}>
-                    {b.tg.toUpperCase()}
-                  </span>
-                )}
-                <span className="z-10 text-[28px]">{b.ic}</span>
-              </div>
-              <div className="p-[9px_11px]">
-                <p className="text-[11px] font-bold whitespace-nowrap overflow-hidden text-ellipsis">{b.nm}</p>
-                <div className="flex justify-between text-[10px] mt-[3px]">
-                  <span className="text-or font-bold font-mono">{b.pt}pts</span>
-                  <span className="text-t3">{b.sk} left</span>
+        
+        {rwTb === 'inv' && (
+        <>
+          <div className="flex gap-1.5 overflow-x-auto pb-1.5 mb-2.5 no-scrollbar">
+            {CTS.map(c => (
+              <button key={c} className={`px-3 py-1.5 rounded-[18px] border-[1.5px] border-bd2 text-[10px] font-semibold whitespace-nowrap shrink-0 cursor-pointer ${ct === c ? 'bg-or border-or text-white' : 'bg-sf text-t2'}`} onClick={() => setCt(c)}>{c}</button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            {fl.map((b: any) => (
+              <div key={b.id} className="bg-bg-sec border border-bd rounded-[13px] overflow-hidden cursor-pointer shadow-sh active:scale-95 transition-transform" onClick={() => { setSh(b.id); setDm(b.dm[0]); }}>
+                <div className="h-[76px] flex items-center justify-center text-[28px] relative" style={{ background: b.bg }}>
+                  {b.tg && (
+                    <span className="absolute top-[5px] right-[5px] px-1.5 py-[2px] rounded-[5px] text-[7px] font-bold tracking-wider" 
+                          style={{ background: b.tg === 'hot' ? 'rgba(255,90,101,0.12)' : b.tg === 'new' ? 'rgba(29,212,232,0.1)' : 'rgba(212,216,110,.1)', color: b.tg === 'hot' ? '#ff5a65' : b.tg === 'new' ? '#1dd4e8' : 'var(--color-brand-yl)' }}>
+                      {b.tg.toUpperCase()}
+                    </span>
+                  )}
+                  <span className="z-10 text-[28px]">{b.ic}</span>
+                </div>
+                <div className="p-[9px_11px]">
+                  <p className="text-[11px] font-bold whitespace-nowrap overflow-hidden text-ellipsis">{b.nm}</p>
+                  <div className="flex justify-between text-[10px] mt-[3px]">
+                    <span className="text-or font-bold font-mono">{b.pt}pts</span>
+                    <span className="text-t3">{b.sk} left</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </>
+        )}
+        
+        {rwTb === 'red' && (
+        <div className="flex flex-col gap-2 mb-3">
+           {myReds.length === 0 && <p className="text-t3 text-center mt-7 text-xs">No redemptions yet.</p>}
+           {myReds.map((r: any) => (
+             <div key={r.id} className="bg-bg-sec border border-bd rounded-[13px] p-3 shadow-sh flex items-center justify-between">
+                <div>
+                  <p className="text-[12px] font-bold text-tx mb-[2px]">{r.rnm}</p>
+                  <p className="text-[10px] text-t3">{r.dt} {r.rx ? `· Exp: ${r.rx}` : ''}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                   <span className="text-[11px] font-bold font-mono text-or">-{r.pt} pts</span>
+                   <span className={`px-1.5 py-0.5 rounded-[4px] text-[8px] font-bold uppercase ${r.sts === 'completed' ? 'bg-[#2ee89d]/10 text-[#2ee89d]' : r.sts === 'expired' ? 'bg-[#ff5a65]/10 text-[#ff5a65]' : 'bg-or/10 text-or'}`}>{r.sts}</span>
+                </div>
+             </div>
+           ))}
         </div>
+        )}
       </>
     );
   };
@@ -393,7 +453,7 @@ export function ManagerApp() {
 
   const renderHistory = () => (
     <>
-      <h2 className="text-lg font-extrabold my-3.5 tracking-tight">History</h2>
+      <h2 className="text-lg font-extrabold my-3.5 tracking-tight">Points History</h2>
       {mTx.length ? mTx.map((tx: any) => renderTx(tx)) : <p className="text-t3 text-center mt-7">No transactions</p>}
     </>
   );
@@ -428,6 +488,9 @@ export function ManagerApp() {
           <button className="mt-4 w-full py-2 bg-[rgba(212,140,85,0.1)] border border-[rgba(212,140,85,0.2)] rounded-lg text-xs font-bold text-or cursor-pointer transition-colors hover:bg-[rgba(212,140,85,0.2)]" onClick={() => { setEpData({ email: m.email||'', dob: m.dob||'', addr: m.addr||'', social: m.social||'' }); setEpMo(true); }}>Edit Profile Details</button>
         </div>
         
+        <div className="flex items-center gap-2.5 p-[11px_13px] bg-sf border border-bd rounded-xl cursor-pointer text-tx mb-1.5 active:scale-[0.98] transition-transform" onClick={() => setTab('history')}>
+          <Icons.clk className="w-[18px] h-[18px]" /> <span className="flex-1 text-xs font-semibold">Points History</span> <Icons.ar className="w-3 h-3 rotate-180" />
+        </div>
         <div className="flex items-center gap-2.5 p-[11px_13px] bg-sf border border-bd rounded-xl cursor-pointer text-tx mb-1.5 active:scale-[0.98] transition-transform" onClick={() => setTab('rewards')}>
           <Icons.gift className="w-[18px] h-[18px]" /> <span className="flex-1 text-xs font-semibold">My Rewards</span> <Icons.ar className="w-3 h-3 rotate-180" />
         </div>
@@ -520,7 +583,19 @@ export function ManagerApp() {
                 <div className="grid grid-cols-3 gap-1.5 mb-3">
                   <div className="bg-sf border border-bd rounded-[10px] p-2.5 text-center"><p className="text-[15px] font-bold font-mono text-or">{pn}</p><p className="text-[8px] text-t3 uppercase tracking-[0.06em] font-semibold">Points</p></div>
                   <div className="bg-sf border border-bd rounded-[10px] p-2.5 text-center"><p className="text-[15px] font-bold font-mono text-[#2ee89d]">{b.sk}</p><p className="text-[8px] text-t3 uppercase tracking-[0.06em] font-semibold">Stock</p></div>
-                  <div className="bg-sf border border-bd rounded-[10px] p-2.5 text-center"><p className="text-[15px] font-bold font-mono text-lb">1yr</p><p className="text-[8px] text-t3 uppercase tracking-[0.06em] font-semibold">Valid</p></div>
+                  <div className="bg-sf border border-bd rounded-[10px] p-2.5 text-center flex flex-col justify-center">
+                    {(b as any).rx ? (
+                       <>
+                         <p className="text-[10px] font-bold font-mono text-[#ff5a65] truncate leading-none mb-0.5">{(b as any).rx}</p>
+                         <p className="text-[8px] text-t3 uppercase tracking-[0.06em] font-semibold">Expires</p>
+                       </>
+                    ) : (
+                       <>
+                         <p className="text-[15px] font-bold font-mono text-lb leading-none mb-0.5">1yr</p>
+                         <p className="text-[8px] text-t3 uppercase tracking-[0.06em] font-semibold">Valid</p>
+                       </>
+                    )}
+                  </div>
                 </div>
                 <p className="text-[10px] text-t3 mb-1.5 font-bold uppercase tracking-[0.06em]">Denomination</p>
                 <div className="flex gap-1.5 flex-wrap mb-3">
@@ -549,7 +624,7 @@ export function ManagerApp() {
     <div className="max-w-[480px] mx-auto min-h-[100dvh] relative text-tx flex flex-col">
       <div className="sticky top-0 z-50 pt-3 px-4 flex items-center justify-between bg-gradient-to-b from-bg-prime/100 to-transparent pb-4">
         <div>
-          <p className="text-[12px] uppercase tracking-wider font-extrabold bg-gradient-to-r from-green-400 to-[#1bb377] bg-clip-text text-transparent inline-flex items-center gap-1"><Icons.tgt className="w-3 h-3 text-green-400" /> HMPL Rewards</p>
+          <p className="text-[12px] uppercase tracking-wider font-extrabold bg-gradient-to-r from-green-400 to-[#1bb377] bg-clip-text text-transparent inline-flex items-center gap-1"><HMPLLogo className="w-3.5 h-3.5 text-green-400 drop-shadow-[0_0_2px_rgba(46,232,157,0.8)]" /> HMPL Rewards</p>
           <p className="text-base font-extrabold">{m.nm}</p>
         </div>
         <div className="flex gap-1.5">
@@ -580,21 +655,28 @@ export function ManagerApp() {
           </>
         )}
         {tab === 'faq' && (
-          <>
-            <h2 className="text-lg font-extrabold my-3.5 tracking-tight">FAQ</h2>
-            {FAQ.map((f: any, i) => (
-              <div key={i} className="bg-bg-sec border border-bd rounded-xl p-3 mb-1.5 shadow-sh">
+          <div className="flex flex-col gap-2 relative mt-3 mb-4">
+            <h2 className="text-lg font-extrabold my-1 tracking-tight">FAQ & Terms</h2>
+            <div className="relative mb-2">
+              <input className="w-full p-3 pl-10 bg-bd border-[1.5px] border-bd2 rounded-[11px] text-tx text-[13px] focus:border-or outline-none" placeholder="Search policies and terms..." value={searchQ} onChange={e => setSearchQ(e.target.value)} />
+              <Icons.sch className="w-4 h-4 text-t3 absolute left-3 top-1/2 -translate-y-1/2" />
+            </div>
+            
+            <h3 className="text-base font-bold my-1 mt-2 text-or">FAQ</h3>
+            {FAQ.filter((f: any) => f.q.toLowerCase().includes(searchQ.toLowerCase()) || f.a.toLowerCase().includes(searchQ.toLowerCase())).map((f: any, i) => (
+              <div key={i} className="bg-bg-sec border border-bd rounded-xl p-3 shadow-sh">
                 <p className="text-xs font-bold mb-1">❓ {f.q}</p>
                 <p className="text-[11px] text-t2 leading-relaxed">{f.a}</p>
               </div>
             ))}
-            <h2 className="text-lg font-extrabold mt-4 mb-3.5 tracking-tight">Terms</h2>
+            
+            <h3 className="text-base font-bold my-1 mt-3 text-or">Terms</h3>
             <div className="bg-bg-sec border border-bd rounded-xl p-3 mb-1.5 shadow-sh">
-              {TERMS.map((t: string, i: number) => (
-                <p key={i} className="text-[11px] text-t2 leading-relaxed mb-1"><strong className="text-or">{i+1}.</strong> {t}</p>
+              {TERMS.filter((t: string) => t.toLowerCase().includes(searchQ.toLowerCase())).map((t: string, i: number) => (
+                <p key={i} className="text-[11px] text-t2 leading-relaxed mb-1"><strong className="text-or">•</strong> {t}</p>
               ))}
             </div>
-          </>
+          </div>
         )}
       </div>
 
@@ -603,6 +685,7 @@ export function ManagerApp() {
           {id:'home',i:Icons.home,l:'Home'},
           {id:'upload',i:Icons.up,l:'Upload'},
           {id:'rewards',i:Icons.gift,l:'Rewards'},
+          {id:'history',i:Icons.clk,l:'History'},
           {id:'leaderboard',i:Icons.bar,l:'Rank'},
           {id:'profile',i:Icons.usr,l:'Profile'}
         ].map(t => (

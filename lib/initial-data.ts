@@ -1,23 +1,23 @@
 export const MODELS = [
-  { id: 'OA6', nm: 'Oppo A6', ic: '📱', cl: '#9FA8DA', bg: 'rgba(159,168,218,.1)' },
-  { id: 'OA6P', nm: 'Oppo A6 Pro', ic: '📲', cl: '#D4D86E', bg: 'rgba(212,216,110,.1)' },
-  { id: 'OA6X', nm: 'Oppo A6x', ic: '📳', cl: '#D28C55', bg: 'rgba(212,140,85,.1)' },
-  { id: 'OF31', nm: 'Oppo F31', ic: '🔮', cl: '#6E6A8E', bg: 'rgba(110,106,142,.1)' },
-  { id: 'OF33', nm: 'Oppo F33', ic: '💎', cl: '#4ECDC4', bg: 'rgba(78,205,196,.1)' },
-  { id: 'OR15', nm: 'Reno 15', ic: '⚡', cl: '#FFD700', bg: 'rgba(255,215,0,.08)' },
-  { id: 'OR14', nm: 'Reno 14', ic: '🌟', cl: '#FF6B9D', bg: 'rgba(255,107,157,.1)' },
-  { id: 'OR11', nm: 'Reno 11', ic: '✨', cl: '#9B7AFF', bg: 'rgba(155,122,255,.1)' },
+  { id: 'OA6', nm: 'Oppo A6', sr: 'A Series', ic: '📱', cl: '#9FA8DA', bg: 'rgba(159,168,218,.1)' },
+  { id: 'OA6P', nm: 'Oppo A6 Pro', sr: 'A Series', ic: '📲', cl: '#D4D86E', bg: 'rgba(212,216,110,.1)' },
+  { id: 'OA6X', nm: 'Oppo A6x', sr: 'A Series', ic: '📳', cl: '#D28C55', bg: 'rgba(212,140,85,.1)' },
+  { id: 'OF31', nm: 'Oppo F31', sr: 'F Series', ic: '🔮', cl: '#6E6A8E', bg: 'rgba(110,106,142,.1)' },
+  { id: 'OF33', nm: 'Oppo F33', sr: 'F Series', ic: '💎', cl: '#4ECDC4', bg: 'rgba(78,205,196,.1)' },
+  { id: 'OR15', nm: 'Reno 15', sr: 'Reno Series', ic: '⚡', cl: '#FFD700', bg: 'rgba(255,215,0,.08)' },
+  { id: 'OR14', nm: 'Reno 14', sr: 'Reno Series', ic: '🌟', cl: '#FF6B9D', bg: 'rgba(255,107,157,.1)' },
+  { id: 'OR11', nm: 'Reno 11', sr: 'Reno Series', ic: '✨', cl: '#9B7AFF', bg: 'rgba(155,122,255,.1)' },
 ];
 
 export const BRANDS = [
-  { id: 'B01', nm: 'Amazon', ct: 'E-commerce', pt: 500, sk: 40, ic: '🛒', bg: 'linear-gradient(135deg,#232f3e,#131921)', ds: 'Amazon.in Gift Card', dm: [250, 500, 1000, 2000], tg: 'best' },
-  { id: 'B02', nm: 'Flipkart', ct: 'E-commerce', pt: 500, sk: 35, ic: '🛍️', bg: 'linear-gradient(135deg,#2874f0,#1a5dc7)', ds: 'Flipkart Gift', dm: [250, 500, 1000], tg: 'best' },
-  { id: 'B03', nm: 'Swiggy', ct: 'Food', pt: 300, sk: 60, ic: '🍽️', bg: 'linear-gradient(135deg,#fc8019,#e06c00)', ds: 'Food voucher', dm: [200, 500] },
-  { id: 'B04', nm: 'PVR INOX', ct: 'Entertainment', pt: 350, sk: 50, ic: '🎬', bg: 'linear-gradient(135deg,#1a1a2e,#2d1f3d)', ds: 'Movie voucher', dm: [250, 500], tg: 'hot' },
-  { id: 'B05', nm: 'Myntra', ct: 'Fashion', pt: 400, sk: 25, ic: '👗', bg: 'linear-gradient(135deg,#ff3f6c,#e8356a)', ds: 'Fashion card', dm: [500, 1000], tg: 'hot' },
-  { id: 'B06', nm: 'Nykaa', ct: 'Beauty', pt: 400, sk: 30, ic: '💄', bg: 'linear-gradient(135deg,#fc2779,#d91f65)', ds: 'Beauty card', dm: [500, 1000] },
-  { id: 'B07', nm: 'MakeMyTrip', ct: 'Travel', pt: 800, sk: 15, ic: '✈️', bg: 'linear-gradient(135deg,#ef4123,#0770E3)', ds: 'Travel card', dm: [1000, 2000], tg: 'new' },
-  { id: 'B08', nm: 'Starbucks', ct: 'Food', pt: 350, sk: 30, ic: '☕', bg: 'linear-gradient(135deg,#006241,#00432d)', ds: 'Coffee card', dm: [250, 500], tg: 'hot' },
+  { id: 'B01', nm: 'Amazon', ct: 'E-commerce', pt: 500, sk: 40, ic: '🛒', bg: 'linear-gradient(135deg,#232f3e,#131921)', ds: 'Amazon.in Gift Card', dm: [250, 500, 1000, 2000], tg: 'best', rx: '' },
+  { id: 'B02', nm: 'Flipkart', ct: 'E-commerce', pt: 500, sk: 35, ic: '🛍️', bg: 'linear-gradient(135deg,#2874f0,#1a5dc7)', ds: 'Flipkart Gift', dm: [250, 500, 1000], tg: 'best', rx: '' },
+  { id: 'B03', nm: 'Swiggy', ct: 'Food', pt: 300, sk: 60, ic: '🍽️', bg: 'linear-gradient(135deg,#fc8019,#e06c00)', ds: 'Food voucher', dm: [200, 500], rx: '' },
+  { id: 'B04', nm: 'PVR INOX', ct: 'Entertainment', pt: 350, sk: 50, ic: '🎬', bg: 'linear-gradient(135deg,#1a1a2e,#2d1f3d)', ds: 'Movie voucher', dm: [250, 500], tg: 'hot', rx: '' },
+  { id: 'B05', nm: 'Myntra', ct: 'Fashion', pt: 400, sk: 25, ic: '👗', bg: 'linear-gradient(135deg,#ff3f6c,#e8356a)', ds: 'Fashion card', dm: [500, 1000], tg: 'hot', rx: '' },
+  { id: 'B06', nm: 'Nykaa', ct: 'Beauty', pt: 400, sk: 30, ic: '💄', bg: 'linear-gradient(135deg,#fc2779,#d91f65)', ds: 'Beauty card', dm: [500, 1000], rx: '' },
+  { id: 'B07', nm: 'MakeMyTrip', ct: 'Travel', pt: 800, sk: 15, ic: '✈️', bg: 'linear-gradient(135deg,#ef4123,#0770E3)', ds: 'Travel card', dm: [1000, 2000], tg: 'new', rx: '' },
+  { id: 'B08', nm: 'Starbucks', ct: 'Food', pt: 350, sk: 30, ic: '☕', bg: 'linear-gradient(135deg,#006241,#00432d)', ds: 'Coffee card', dm: [250, 500], tg: 'hot', rx: '' },
 ];
 
 export const CTS = ['All', 'E-commerce', 'Fashion', 'Food', 'Travel', 'Entertainment', 'Beauty'];
@@ -45,6 +45,7 @@ export const FAQ = [
   { q: 'When do I get points?', a: 'Points are credited when admin approves your IMEI submission. Base points are added per approved IMEI, plus model bonuses.' },
   { q: 'What rewards can I redeem?', a: 'Gift cards from Amazon, Flipkart, Myntra, and more. New rewards are added regularly by admin.' },
   { q: 'What happens if IMEI is rejected?', a: 'Rejected IMEIs don\'t count. You\'ll be notified with the reason.' },
+  { q: 'Are there any penalties?', a: 'Yes, repeated submission of invalid or duplicate IMEIs may restrict your account or result in a point deduction.' }
 ];
 
 export const TERMS = [
@@ -55,7 +56,8 @@ export const TERMS = [
   'Points expire after 12 months.',
   'Admin can modify targets/rewards anytime.',
   'Model assignments managed by admin.',
-  'Rewards subject to stock availability.'
+  'Rewards subject to stock availability.',
+  'Company reserves the right to audit sales data.'
 ];
 
 const AVS = ['#ff6b9d', '#9b7aff', '#2ee89d', '#ffb347', '#4ecdc4', '#e74c3c', '#3498db', '#f39c12'];

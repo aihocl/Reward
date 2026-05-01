@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useStore } from '@/lib/store';
-import { Icons } from './icons';
+import { Icons, HMPLLogo } from './icons';
 import { AREAS, CTS } from '@/lib/initial-data';
 import { uid, td } from '@/lib/utils';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -13,6 +13,8 @@ export function AdminApp() {
   const { state, updateDb, setTheme, logout } = useStore();
   const [at, setAt] = useState('dash');
   const [sr, setSr] = useState('');
+  const [rwTb, setRwTb] = useState('inv');
+  const [rptTb, setRptTb] = useState('mgrs');
   const [mo, setMo] = useState('');
   const [md, setMd] = useState<any>({});
   
@@ -27,11 +29,15 @@ export function AdminApp() {
   const [rc, setRc] = useState(CTS[1]);
   const [rp, setRp] = useState('');
   const [rs, setRs] = useState('');
+  const [rx, setRx] = useState(''); // Expiry/Validity
+  const [newMgrTgts, setNewMgrTgts] = useState<Record<string, number>>({});
   const [mdNm, setMdNm] = useState('');
+
   const [mdIc, setMdIc] = useState('📱');
   const [selIm, setSelIm] = useState<string[]>([]);
   const [tgtValues, setTgtValues] = useState<Record<string, {tgt: number, ach: number}>>({});
   const [xTgts, setXTgts] = useState<any[]>([]);
+  const [xMods, setXMods] = useState<any[]>([]);
   
   const [ePol, setEPol] = useState<any>(null);
 
@@ -40,6 +46,35 @@ export function AdminApp() {
   const showToast = (msg: string, type = 'ok') => {
     setTst({ m: msg, t: type });
     setTimeout(() => setTst(null), 2800);
+  };
+
+  const handleUploadExcelMods = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = xlsx.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data: any[] = xlsx.utils.sheet_to_json(ws);
+        
+        const parsed = data.map((row: any) => {
+          return {
+            nm: row['Model Name'] || '',
+            sr: row['Model Series'] || 'Other',
+            ic: row['Icon'] || '📱',
+          };
+        }).filter(r => r.nm);
+        setXMods(parsed);
+        showToast(`Loaded ${parsed.length} models`, 'ok');
+      } catch (err) {
+        showToast('Invalid Excel file format', 'err');
+      }
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = '';
   };
 
   const handleUploadExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,6 +173,39 @@ export function AdminApp() {
     if (a === 'export') { showToast('Excel exported!'); }
     else if (a === 'am') setMo('am');
     else if (a === 'ar') setMo('ar');
+    else if (a === 'excel-mods') { setMo('excel-mods'); setXMods([]); }
+    else if (a === 'apply-excel-mods') {
+      updateDb((prev: any) => {
+         const db = JSON.parse(JSON.stringify(prev));
+         if (!db.adminLog) db.adminLog = [];
+         db.adminLog = [{id: uid(), dt: td(), act: 'Bulk Models Upload', det: `Uploaded ${xMods.length} models via Excel`}, ...db.adminLog];
+         
+         const newMods = xMods.map((xm: any) => {
+            const existing = db.models.find((m: any) => m.nm.toLowerCase() === xm.nm.toLowerCase());
+            if (existing) {
+              return { ...existing, sr: xm.sr, ic: xm.ic };
+            } else {
+              const id = xm.nm.replace(/\s+/g, '').slice(0, 4).toUpperCase() + uid().slice(0, 2);
+              return { id, nm: xm.nm, sr: xm.sr, ic: xm.ic, cl: 'var(--color-brand-lb)', bg: 'rgba(159,168,218,.1)' };
+            }
+         });
+
+         // update models
+         db.models = [...db.models.filter((m: any) => !newMods.find((nm: any) => nm.id === m.id)), ...newMods];
+
+         // auto update targets properties
+         db.mgrs = db.mgrs.map((m: any) => {
+            const nt = { ...(m.targets || {}) };
+            newMods.forEach((mod: any) => {
+               if (!nt[mod.id]) nt[mod.id] = { tgt: 0, ach: 0 };
+            });
+            return { ...m, targets: nt };
+         });
+
+         return db;
+      });
+      setMo(''); showToast('Models Updated!');
+    }
     else if (a === 'excel') { setMo('excel'); setXTgts([]); }
     else if (a === 'apply-excel') {
       updateDb((prev: any) => {
@@ -165,6 +233,7 @@ export function AdminApp() {
     else if (a === 'amod') { setMd({}); setMdNm(''); setMdIc('📱'); setMo('amod'); }
     else if (a === 'emod') { setMd(data); setMdNm(data.nm); setMdIc(data.ic); setMo('amod'); }
     else if (a === 'cm') setMo('');
+    else if (a === 'mgr-det') { setMd({ mid: data }); setMo('mgr-det'); }
     else if (a === 'ap') { setMd({mid: data}); setMo('ap'); }
     else if (a === 'at') {
       const mgr = state.db.mgrs.find((m: any) => m.id === data);
@@ -216,7 +285,7 @@ export function AdminApp() {
     else if (a === 'sm') {
       if (!nn || !np || !ns) return;
       const tgts: any = {};
-      state.db.models.forEach((m: any) => { tgts[m.id] = { tgt: Math.floor(Math.random() * 30) + 15, ach: 0 }; });
+      state.db.models.forEach((m: any) => { tgts[m.id] = { tgt: newMgrTgts[m.id] || 0, ach: 0 }; });
       updateDb((prev: any) => {
         const db = JSON.parse(JSON.stringify(prev));
         if (!db.adminLog) db.adminLog = [];
@@ -229,7 +298,7 @@ export function AdminApp() {
         }];
         return db;
       });
-      setMo(''); showToast('Added!'); setNn(''); setNp(''); setNs('');
+      setMo(''); showToast('Added!'); setNn(''); setNp(''); setNs(''); setNewMgrTgts({});
     }
     else if (a === 'sr') {
       const pp = parseInt(rp); const ss = parseInt(rs);
@@ -240,11 +309,11 @@ export function AdminApp() {
         db.adminLog = [{id: uid(), dt: td(), act: 'Add Reward', det: `New reward ${rn} added in ${rc} category`}, ...db.adminLog];
         db.rw = [...db.rw, {
           id: 'B' + uid(), nm: rn, ct: rc, pt: pp, sk: ss, ic: '🎁', 
-          bg: 'linear-gradient(135deg,#2a2a4a,#1a1a3a)', ds: 'Gift card', dm: [pp * 2], tg: null
+          bg: 'linear-gradient(135deg,#2a2a4a,#1a1a3a)', ds: 'Gift card', dm: [pp * 2], tg: null, rx: rx ? rx : null
         }];
         return db;
       });
-      setMo(''); showToast('Reward added!'); setRn(''); setRp(''); setRs('');
+      setMo(''); showToast('Reward added!'); setRn(''); setRp(''); setRs(''); setRx('');
     }
     else if (a === 'do-excel') {
       const names = ['Excel User 1', 'Excel User 2'];
@@ -267,8 +336,8 @@ export function AdminApp() {
         + "Date,Type,Amount,Details\n"
         + state.db.tx.map((t: any) => `${t.dt || ''},${t.tp || ''},${t.pt || 0},"${(t.rs || '').replace(/"/g, '""')}"`).join("\n") 
         + "\n\n"
-        + "Date,Reward,Amount,Status\n"
-        + (state.db.rd || []).map((r: any) => `${r.dt || ''},"${(r.rnm || '').replace(/"/g, '""')}",${r.pt || 0},${r.sts || ''}`).join("\n");
+        + "Date,Reward,Amount,Status,Expiry\n"
+        + (state.db.rd || []).map((r: any) => `${r.dt || ''},"${(r.rnm || '').replace(/"/g, '""')}",${r.pt || 0},${r.sts || ''},${r.rx || ''}`).join("\n");
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
       link.setAttribute("href", encodedUri);
@@ -277,6 +346,60 @@ export function AdminApp() {
       link.click();
       document.body.removeChild(link);
       showToast('Export successful!');
+    }
+    else if (a === 'export-data-mgrs') {
+      const db = state.db;
+      let csvContent = "data:text/csv;charset=utf-8,Manager Name,Manager ID,Store,Area,Total Target,Total Achieved,Target %,Total Points\n";
+      db.mgrs.forEach((m: any) => {
+        const tA = Object.values(m.targets || {} as Record<string, any>).reduce((s: any, t: any) => s + (t.ach || 0), 0) as number;
+        const tT = Object.values(m.targets || {} as Record<string, any>).reduce((s: any, t: any) => s + (t.tgt || 0), 0) as number;
+        const pct = tT ? Math.round((tA / tT) * 100) : 0;
+        csvContent += `"${m.nm}","${m.id}","${m.store}","${m.area}",${tT},${tA},${pct}%,${m.pts}\n`;
+      });
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "manager_report.csv");
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+    else if (a === 'export-data-mdls') {
+      const db = state.db;
+      let csvContent = "data:text/csv;charset=utf-8,Model Name,Model Series,Target,Achieved,Achieved %\n";
+      db.models.forEach((md: any) => {
+        let tT = 0; let tA = 0;
+        db.mgrs.forEach((mg: any) => {
+           tT += (mg.targets?.[md.id]?.tgt || 0);
+           tA += (mg.targets?.[md.id]?.ach || 0);
+        });
+        const pct = tT ? Math.round((tA / tT) * 100) : 0;
+        csvContent += `"${md.nm}","${md.sr}",${tT},${tA},${pct}%\n`;
+      });
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "model_report.csv");
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+    else if (a === 'export-data-sr') {
+      const db = state.db;
+      let csvContent = "data:text/csv;charset=utf-8,Series Name,Target,Achieved,Achieved %\n";
+      const srStats: any = {};
+      db.models.forEach((md: any) => {
+         if (!srStats[md.sr]) { srStats[md.sr] = { sr: md.sr, tT: 0, tA: 0 }; }
+         db.mgrs.forEach((mg: any) => {
+            srStats[md.sr].tT += (mg.targets?.[md.id]?.tgt || 0);
+            srStats[md.sr].tA += (mg.targets?.[md.id]?.ach || 0);
+         });
+      });
+      Object.values(srStats).forEach((ms: any) => {
+         const pct = ms.tT ? Math.round((ms.tA / ms.tT) * 100) : 0;
+         csvContent += `"${ms.sr}",${ms.tT},${ms.tA},${pct}%\n`;
+      });
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "series_report.csv");
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
     else if (a === 'save-model') {
        if (!mdNm) return;
@@ -582,7 +705,7 @@ export function AdminApp() {
           </thead>
           <tbody>
             {sortedMgrs.map((m: any) => (
-              <tr key={m.id} className="cursor-pointer hover:bg-sf" onClick={() => handleAction('ap', m.id)}>
+              <tr key={m.id} className="cursor-pointer hover:bg-sf" onClick={() => handleAction('mgr-det', m.id)}>
                 <td className="p-[9px_10px] border-b border-bd whitespace-nowrap text-[11px]">
                   <div className="flex items-center gap-1.5">
                      <div className="w-[22px] h-[22px] border border-bd2 rounded-full flex items-center justify-center text-[8px] font-bold text-white shrink-0" style={{ background: m.avClr }}>{m.av}</div>
@@ -704,9 +827,14 @@ export function AdminApp() {
     <>
       <div className="flex justify-between items-center mb-4 flex-wrap gap-[7px]">
         <h1 className="text-xl font-extrabold text-tx">Models overview</h1>
-        <button className="bg-gradient-to-br from-lb to-[#3a2080] text-white px-4 py-2 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer shadow-md transition-transform active:scale-95 border-0" onClick={() => setMo('amod')}>
-          <Icons.pls className="w-3.5 h-3.5" /> Add Model
-        </button>
+        <div className="flex gap-2">
+           <button className="bg-sf text-tx px-4 py-2 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer shadow-md transition-colors hover:bg-bd border border-bd border-solid" onClick={() => setMo('excel-mods')}>
+             <Icons.up className="w-3.5 h-3.5" /> Bulk Upload
+           </button>
+           <button className="bg-gradient-to-br from-lb to-[#3a2080] text-white px-4 py-2 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer shadow-md transition-transform active:scale-95 border-0" onClick={() => setMo('amod')}>
+             <Icons.pls className="w-3.5 h-3.5" /> Add Model
+           </button>
+        </div>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
          {state.db.models.map((m: any) => {
@@ -789,50 +917,89 @@ export function AdminApp() {
          </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
-         {state.db.rw.map((r: any) => {
-           let r_redeemed = state.db.rd?.filter((x: any) => x.rid === r.id)?.length || 0;
-           return (
-           <div key={r.id} className="bg-bg-sec border border-bd rounded-[14px] p-4 shadow-sh flex flex-col relative overflow-hidden group">
-             <div className="flex items-center gap-3 mb-3 relative z-10">
-               <div className="w-12 h-12 rounded-xl flex items-center justify-center text-[24px]" style={{background: r.bg}}>{r.ic}</div>
-               <div className="flex-1">
-                  <p className="text-[14px] font-bold leading-tight text-tx">{r.nm}</p>
-                  <p className="text-[10px] text-t3 uppercase font-semibold tracking-wider">{r.ct} · <span className="text-lb">Stock: {r.sk}</span></p>
+      <div className="flex gap-2 mb-4">
+         <button className={`px-4 py-2 text-xs font-bold rounded-[11px] cursor-pointer transition-colors border-0 ${rwTb === 'inv' ? 'bg-[#2ee89d] text-[#111]' : 'bg-sf text-t2 hover:bg-bd2'}`} onClick={() => setRwTb('inv')}>Inventory</button>
+         <button className={`px-4 py-2 text-xs font-bold rounded-[11px] cursor-pointer transition-colors border-0 flex items-center gap-1.5 ${rwTb === 'red' ? 'bg-[#2ee89d] text-[#111]' : 'bg-sf text-t2 hover:bg-bd2'}`} onClick={() => setRwTb('red')}>Redemptions {totRedeems > 0 && <span className={`px-1.5 py-0.5 rounded-[5px] text-[8px] ${rwTb === 'red' ? 'bg-[#111] text-[#2ee89d]' : 'bg-[rgba(46,232,157,0.15)] text-[#2ee89d]'}`}>{totRedeems}</span>}</button>
+      </div>
+
+      {rwTb === 'inv' && (
+      <>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+           {state.db.rw.map((r: any) => {
+             let r_redeemed = state.db.rd?.filter((x: any) => x.rid === r.id)?.length || 0;
+             return (
+             <div key={r.id} className="bg-bg-sec border border-bd rounded-[14px] p-4 shadow-sh flex flex-col relative overflow-hidden group">
+               <div className="flex items-center gap-3 mb-3 relative z-10">
+                 <div className="w-12 h-12 rounded-xl flex items-center justify-center text-[24px]" style={{background: r.bg}}>{r.ic}</div>
+                 <div className="flex-1">
+                    <p className="text-[14px] font-bold leading-tight text-tx">{r.nm}</p>
+                    <p className="text-[10px] text-t3 uppercase font-semibold tracking-wider">{r.ct} · <span className="text-lb">Stock: {r.sk}</span></p>
+                    {r.rx && <p className="text-[9px] text-[#ff5a65] mt-[3px] bg-[#ff5a65]/10 w-fit px-1.5 py-0.5 rounded uppercase font-bold">Expires: {r.rx}</p>}
+                 </div>
+               </div>
+               <div className="grid grid-cols-2 gap-2 relative z-10 mt-auto">
+                 <div className="bg-sf border border-bd rounded-lg p-2 text-center">
+                    <p className="text-[10px] text-t3 uppercase tracking-wider mb-0.5">Points Req</p>
+                    <p className="text-sm font-bold font-mono text-or">{r.pt?.toLocaleString()}</p>
+                 </div>
+                 <div className="bg-sf border border-bd rounded-lg p-2 text-center">
+                    <p className="text-[10px] text-t3 uppercase tracking-wider mb-0.5">Redeemed</p>
+                    <p className="text-sm font-bold font-mono text-[#2ee89d]">{r_redeemed}</p>
+                 </div>
                </div>
              </div>
-             <div className="grid grid-cols-2 gap-2 relative z-10 mt-auto">
-               <div className="bg-sf border border-bd rounded-lg p-2 text-center">
-                  <p className="text-[10px] text-t3 uppercase tracking-wider mb-0.5">Points Req</p>
-                  <p className="text-sm font-bold font-mono text-or">{r.pt?.toLocaleString()}</p>
-               </div>
-               <div className="bg-sf border border-bd rounded-lg p-2 text-center">
-                  <p className="text-[10px] text-t3 uppercase tracking-wider mb-0.5">Redeemed</p>
-                  <p className="text-sm font-bold font-mono text-[#2ee89d]">{r_redeemed}</p>
-               </div>
-             </div>
-           </div>
-           );
-         })}
-      </div>
-      
-      <div className="bg-bg-sec border border-bd rounded-[14px] p-5 shadow-sh flex flex-col md:flex-row gap-4 mb-4">
-        <div className="flex-1">
-          <h3 className="text-sm font-bold mb-2 text-tx flex items-center gap-2"><Icons.cn className="w-5 h-5 text-indigo-400" /> API / Enterprise Integrations (Gyftr, Xoxoday)</h3>
-          <p className="text-xs text-t3 leading-relaxed mb-3">
-            Want to add company-wise rewards (like Amazon, Flipkart vouchers) automatically? You can integrate third-party voucher APIs here.
-          </p>
-          <ul className="text-xs text-t3 space-y-2 list-disc pl-4">
-            <li><strong>Manual Distribution:</strong> Add generic rewards above (e.g. &quot;Gift Card&quot;). When managers redeem, you manually contact the reward vendor and send the employee the codes.</li>
-            <li><strong>Automated API Setup:</strong> Connect Gyftr/Xoxoday APIs. When managers redeem points, the API is triggered on the backend to dynamically fetch a digital voucher and deliver it via SMS or email instantly.</li>
-          </ul>
+             );
+           })}
         </div>
-        <div className="shrink-0 flex items-center justify-center">
-           <button className="bg-[rgba(99,102,241,0.1)] border border-[rgba(99,102,241,0.3)] text-indigo-400 px-4 py-2 text-xs font-bold rounded-xl cursor-pointer hover:bg-[rgba(99,102,241,0.2)] transition-colors" onClick={() => showToast('API integration required. Please contact developer.', 'err')}>
-             Setup API Hook
-           </button>
+        
+        <div className="bg-bg-sec border border-bd rounded-[14px] p-5 shadow-sh flex flex-col md:flex-row gap-4 mb-4">
+          <div className="flex-1">
+            <h3 className="text-sm font-bold mb-2 text-tx flex items-center gap-2"><Icons.cn className="w-5 h-5 text-indigo-400" /> API / Enterprise Integrations (Gyftr, Xoxoday)</h3>
+            <p className="text-xs text-t3 leading-relaxed mb-3">
+              Want to add company-wise rewards (like Amazon, Flipkart vouchers) automatically? You can integrate third-party voucher APIs here.
+            </p>
+            <ul className="text-xs text-t3 space-y-2 list-disc pl-4">
+              <li><strong>Manual Distribution:</strong> Add generic rewards above (e.g. &quot;Gift Card&quot;). When managers redeem, you manually contact the reward vendor and send the employee the codes.</li>
+              <li><strong>Automated API Setup:</strong> Connect Gyftr/Xoxoday APIs. When managers redeem points, the API is triggered on the backend to dynamically fetch a digital voucher and deliver it via SMS or email instantly.</li>
+            </ul>
+          </div>
+          <div className="shrink-0 flex items-center justify-center">
+             <button className="bg-[rgba(99,102,241,0.1)] border border-[rgba(99,102,241,0.3)] text-indigo-400 px-4 py-2 text-xs font-bold rounded-xl cursor-pointer hover:bg-[rgba(99,102,241,0.2)] transition-colors" onClick={() => showToast('API integration required. Please contact developer.', 'err')}>
+               Setup API Hook
+             </button>
+          </div>
         </div>
-      </div>
+      </>
+      )}
+
+      {rwTb === 'red' && (
+         <div className="flex flex-col gap-2">
+            {(state.db.rd || []).map((r: any) => {
+               const mgr = state.db.mgrs.find((m: any) => m.id === r.mid);
+               return (
+                 <div key={r.id} className="bg-bg-sec border border-bd rounded-[14px] p-4 shadow-sh flex flex-col md:flex-row justify-between md:items-center gap-3">
+                    <div>
+                      <p className="text-sm font-bold text-tx mb-1">{r.rnm} <span className="text-[10px] text-t3 font-mono ml-2">#{r.id}</span></p>
+                      <p className="text-[11px] text-t2">Manager: <span className="text-tx font-medium">{mgr?.nm || r.mid}</span> · {mgr?.ph || ''}</p>
+                      <p className="text-[11px] text-t2">Date: <span className="text-tx font-medium">{r.dt}</span></p>
+                    </div>
+                    <div className="flex flex-col items-start md:items-end gap-2">
+                       <span className={`px-2 py-1 rounded-[6px] text-[10px] font-bold uppercase ${r.sts === 'completed' ? 'bg-[#2ee89d]/10 text-[#2ee89d]' : r.sts === 'expired' ? 'bg-[#ff5a65]/10 text-[#ff5a65]' : 'bg-or/10 text-or'}`}>{r.sts}</span>
+                       {r.sts === 'pending' && (
+                          <div className="flex gap-1.5">
+                             <button className="px-2 py-1 bg-[#2ee89d]/10 text-[#2ee89d] border border-[#2ee89d]/20 rounded text-[10px] font-bold cursor-pointer hover:bg-[#2ee89d]/20 transition-colors" onClick={() => updateDb((prev:any) => ({...prev, rd: prev.rd.map((x:any) => x.id===r.id ? {...x, sts:'completed'} : x)}))}>Mark Completed</button>
+                             <button className="px-2 py-1 bg-[#ff5a65]/10 text-[#ff5a65] border border-[#ff5a65]/20 rounded text-[10px] font-bold cursor-pointer hover:bg-[#ff5a65]/20 transition-colors" onClick={() => updateDb((prev:any) => ({...prev, rd: prev.rd.map((x:any) => x.id===r.id ? {...x, sts:'expired'} : x)}))}>Mark Expired</button>
+                          </div>
+                       )}
+                    </div>
+                 </div>
+               )
+            })}
+            {!(state.db.rd?.length > 0) && (
+               <p className="text-t3 text-[12px] p-4 text-center">No redemptions found.</p>
+            )}
+         </div>
+      )}
     </>
     );
   };
@@ -982,6 +1149,130 @@ export function AdminApp() {
             </div>
           </div>
         </div>
+
+        <h3 className="text-lg font-extrabold text-tx mt-8 mb-4 flex items-center justify-between">
+           Target vs Achievement Detailed Data
+           <button className="bg-sf border-[1.5px] border-bd2 text-t2 px-3 py-[7px] text-[11px] font-bold rounded-[8px] flex items-center gap-1.5 cursor-pointer active:scale-95 hover:text-tx hover:border-tx transition-colors" onClick={() => handleAction(`export-data-${rptTb}`)}><Icons.down className="w-3 h-3" /> Download CSV</button>
+        </h3>
+        
+        <div className="flex gap-2 mb-4 bg-bg-sec p-1 rounded-[14px]">
+           <button className={`flex-1 py-2 text-[13px] font-bold rounded-[11px] cursor-pointer transition-colors border-0 ${rptTb === 'mgrs' ? 'bg-[#2ee89d] text-[#111] shadow-sm' : 'bg-transparent text-t2 hover:bg-sf'}`} onClick={() => setRptTb('mgrs')}>Managers Wise</button>
+           <button className={`flex-1 py-2 text-[13px] font-bold rounded-[11px] cursor-pointer transition-colors border-0 ${rptTb === 'mdls' ? 'bg-[#2ee89d] text-[#111] shadow-sm' : 'bg-transparent text-t2 hover:bg-sf'}`} onClick={() => setRptTb('mdls')}>Model Wise</button>
+           <button className={`flex-1 py-2 text-[13px] font-bold rounded-[11px] cursor-pointer transition-colors border-0 ${rptTb === 'sr' ? 'bg-[#2ee89d] text-[#111] shadow-sm' : 'bg-transparent text-t2 hover:bg-sf'}`} onClick={() => setRptTb('sr')}>Series Wise</button>
+        </div>
+
+        <div className="bg-bg-sec border border-bd rounded-[14px] overflow-hidden shadow-sh">
+           <div className="overflow-x-auto">
+              {rptTb === 'mgrs' && (
+                <table className="w-full text-left whitespace-nowrap min-w-[600px]">
+                  <thead className="bg-sf border-b border-bd text-[11px] text-t3 uppercase">
+                     <tr>
+                        <th className="p-3 font-semibold">Manager</th>
+                        <th className="p-3 font-semibold">Store / Area</th>
+                        <th className="p-3 font-semibold">Overall Target</th>
+                        <th className="p-3 font-semibold">Overall Ach</th>
+                        <th className="p-3 font-semibold">% Achieved</th>
+                        <th className="p-3 font-semibold">Total Points</th>
+                     </tr>
+                  </thead>
+                  <tbody className="text-[13px]">
+                     {storePerf.map((m: any) => (
+                        <tr key={m.id} className="border-b border-bd hover:bg-[rgba(255,255,255,0.02)] transition-colors">
+                           <td className="p-3 font-semibold text-tx">{m.nm} <span className="text-[10px] text-t3 font-mono ml-1">#{m.id}</span></td>
+                           <td className="p-3 text-t2">{m.store} <span className="text-t3 text-[11px]">({m.area})</span></td>
+                           <td className="p-3 font-mono">{m.tT}</td>
+                           <td className="p-3 font-mono text-[#2ee89d] font-semibold">{m.tA}</td>
+                           <td className="p-3 font-mono">
+                             <span className={`px-2 py-0.5 rounded-[4px] text-[10px] bg-[rgba(255,255,255,0.05)] ${m.pct >= 100 ? 'text-[#2ee89d]' : m.pct >= 80 ? 'text-or' : 'text-[#ff5a65]'}`}>
+                               {m.pct}%
+                             </span>
+                           </td>
+                           <td className="p-3 font-mono text-or font-bold">{m.pts.toLocaleString()}</td>
+                        </tr>
+                     ))}
+                  </tbody>
+                </table>
+              )}
+              {rptTb === 'mdls' && (() => {
+                 const mStats = state.db.models.map((md: any) => {
+                    let totalT = 0; let totalA = 0;
+                    state.db.mgrs.forEach((mg: any) => {
+                       totalT += (mg.targets?.[md.id]?.tgt || 0);
+                       totalA += (mg.targets?.[md.id]?.ach || 0);
+                    });
+                    const pct = totalT ? Math.round((totalA/totalT)*100) : 0;
+                    return {...md, totalT, totalA, pct};
+                 });
+                 return (
+                  <table className="w-full text-left whitespace-nowrap min-w-[500px]">
+                    <thead className="bg-sf border-b border-bd text-[11px] text-t3 uppercase">
+                       <tr>
+                          <th className="p-3 font-semibold">Model</th>
+                          <th className="p-3 font-semibold">Series</th>
+                          <th className="p-3 font-semibold">Total Target</th>
+                          <th className="p-3 font-semibold">Total Ach</th>
+                          <th className="p-3 font-semibold">% Achieved</th>
+                       </tr>
+                    </thead>
+                    <tbody className="text-[13px]">
+                       {mStats.map((ms: any) => (
+                          <tr key={ms.id} className="border-b border-bd hover:bg-[rgba(255,255,255,0.02)] transition-colors">
+                             <td className="p-3 font-semibold text-tx flex items-center gap-2"><span className="text-xl" style={{color: ms.cl}}>{ms.ic}</span> {ms.nm}</td>
+                             <td className="p-3 text-t2">{ms.sr}</td>
+                             <td className="p-3 font-mono">{ms.totalT}</td>
+                             <td className="p-3 font-mono text-[#2ee89d] font-semibold">{ms.totalA}</td>
+                             <td className="p-3 font-mono">
+                               <span className={`px-2 py-0.5 rounded-[4px] text-[10px] bg-[rgba(255,255,255,0.05)] ${ms.pct >= 100 ? 'text-[#2ee89d]' : ms.pct >= 80 ? 'text-or' : 'text-[#ff5a65]'}`}>
+                                 {ms.pct}%
+                               </span>
+                             </td>
+                          </tr>
+                       ))}
+                    </tbody>
+                  </table>
+                 );
+              })()}
+              {rptTb === 'sr' && (() => {
+                 const srStats: any = {};
+                 state.db.models.forEach((md: any) => {
+                    if (!srStats[md.sr]) { srStats[md.sr] = { sr: md.sr, totalT: 0, totalA: 0 }; }
+                    state.db.mgrs.forEach((mg: any) => {
+                       srStats[md.sr].totalT += (mg.targets?.[md.id]?.tgt || 0);
+                       srStats[md.sr].totalA += (mg.targets?.[md.id]?.ach || 0);
+                    });
+                 });
+                 return (
+                  <table className="w-full text-left whitespace-nowrap min-w-[400px]">
+                    <thead className="bg-sf border-b border-bd text-[11px] text-t3 uppercase">
+                       <tr>
+                          <th className="p-3 font-semibold">Series</th>
+                          <th className="p-3 font-semibold">Total Target</th>
+                          <th className="p-3 font-semibold">Total Ach</th>
+                          <th className="p-3 font-semibold">% Achieved</th>
+                       </tr>
+                    </thead>
+                    <tbody className="text-[13px]">
+                       {Object.values(srStats).map((ms: any, idx: number) => {
+                          const pct = ms.totalT ? Math.round((ms.totalA/ms.totalT)*100) : 0;
+                          return (
+                          <tr key={idx} className="border-b border-bd hover:bg-[rgba(255,255,255,0.02)] transition-colors">
+                             <td className="p-3 font-semibold text-tx">{ms.sr}</td>
+                             <td className="p-3 font-mono">{ms.totalT}</td>
+                             <td className="p-3 font-mono text-[#2ee89d] font-semibold">{ms.totalA}</td>
+                             <td className="p-3 font-mono">
+                               <span className={`px-2 py-0.5 rounded-[4px] text-[10px] bg-[rgba(255,255,255,0.05)] ${pct >= 100 ? 'text-[#2ee89d]' : pct >= 80 ? 'text-or' : 'text-[#ff5a65]'}`}>
+                                 {pct}%
+                               </span>
+                             </td>
+                          </tr>
+                          )
+                       })}
+                    </tbody>
+                  </table>
+                 );
+              })()}
+           </div>
+        </div>
       </>
     );
   };
@@ -1029,7 +1320,7 @@ export function AdminApp() {
           <div className="w-8 h-8 rounded-[9px] bg-gradient-to-br from-or to-[#e8a040] flex items-center justify-center shrink-0">
              <Icons.trp className="w-3.5 h-3.5 text-white" />
           </div>
-          <div><p className="text-[14px] font-extrabold uppercase tracking-tight bg-gradient-to-r from-green-400 to-[#1bb377] bg-clip-text text-transparent flex items-center gap-1"><Icons.tgt className="w-3.5 h-3.5 text-green-400" /> HMPL Rewards</p><p className="text-[9px] text-t3 uppercase font-semibold">Admin Panel</p></div>
+          <div><p className="text-[14px] font-extrabold uppercase tracking-tight bg-gradient-to-r from-green-400 to-[#1bb377] bg-clip-text text-transparent flex items-center gap-1"><HMPLLogo className="w-4 h-4 text-green-400 drop-shadow-[0_0_2px_rgba(46,232,157,0.8)]" /> HMPL Rewards</p><p className="text-[9px] text-t3 uppercase font-semibold">Admin Panel</p></div>
         </div>
         {tabs.map(t => (
           <button key={t.id} className={`w-full py-2.5 px-4 bg-transparent border-0 border-l-[3px] text-[12px] font-semibold cursor-pointer text-left flex items-center gap-2 transition-colors ${at === t.id ? 'bg-[rgba(212,140,85,0.06)] border-or text-or' : 'border-transparent text-t3 hover:bg-sf'}`} onClick={() => {setAt(t.id); setSr('');}}>
@@ -1078,7 +1369,7 @@ export function AdminApp() {
 
       {mo === 'am' && (
          <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] z-[200] flex items-center justify-center p-4 animate-[fi_0.15s] backdrop-blur-[3px]" onClick={() => handleAction('cm')}>
-          <div className="bg-bg-sec border border-bd2 rounded-[18px] p-[22px_20px] w-full max-w-[400px] animate-[su_0.25s] shadow-[0_16px_44px_rgba(0,0,0,0.3)] text-tx" onClick={e => e.stopPropagation()}>
+          <div className="bg-bg-sec border border-bd2 rounded-[18px] p-[22px_20px] w-full max-w-[400px] animate-[su_0.25s] shadow-[0_16px_44px_rgba(0,0,0,0.3)] text-tx max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <h3 className="text-base font-bold mb-0.5">Add Manager</h3>
             <p className="text-[11px] text-t3 mb-3.5">Details</p>
             <input className="w-full p-3 bg-bd border-[1.5px] border-bd2 rounded-[11px] text-tx text-[13px] mb-2 focus:border-or outline-none" placeholder="Name" value={nn} onChange={e=>setNn(e.target.value)} />
@@ -1087,6 +1378,18 @@ export function AdminApp() {
             <select className="w-full p-3 bg-bd border-[1.5px] border-bd2 rounded-[11px] text-tx text-[13px] mb-2 focus:border-or outline-none appearance-none" value={na} onChange={e=>setNa(e.target.value)}>
               {AREAS.map(a => <option key={a} value={a}>{a}</option>)}
             </select>
+            
+            <p className="text-[11px] text-t3 mb-2 mt-4 font-bold uppercase tracking-wider">Product Targets</p>
+            <div className="space-y-2 mb-4 bg-sf p-3 rounded-[11px] border border-bd">
+              {state.db.models.map((m: any) => (
+                <div key={m.id} className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded flex items-center justify-center shrink-0" style={{background: m.bg, color: m.cl, fontSize: '12px'}}>{m.ic}</div>
+                  <span className="text-[12px] font-semibold flex-1 truncate">{m.nm}</span>
+                  <input type="number" className="w-[80px] p-2 bg-bd border border-bd2 rounded-lg text-tx text-xs text-center focus:border-or outline-none" placeholder="Target" value={newMgrTgts[m.id] === undefined ? '' : newMgrTgts[m.id]} onChange={e => setNewMgrTgts({...newMgrTgts, [m.id]: parseInt(e.target.value) || 0})} />
+                </div>
+              ))}
+            </div>
+
             <button className="w-full p-3 bg-gradient-to-br from-or to-[#e8a040] border-none rounded-[11px] text-white text-sm font-bold cursor-pointer transition-transform active:scale-95 mt-1" onClick={() => handleAction('sm')}>Add</button>
           </div>
         </div>
@@ -1208,6 +1511,59 @@ export function AdminApp() {
         </div>
       )}
 
+      {mo === 'excel-mods' && (
+         <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] z-[200] flex items-center justify-center p-4 animate-[fi_0.15s] backdrop-blur-[3px]" onClick={() => handleAction('cm')}>
+          <div className="bg-bg-sec border border-bd2 rounded-[18px] p-[22px_20px] w-full max-w-[700px] max-h-[90vh] overflow-y-auto animate-[su_0.25s] shadow-[0_16px_44px_rgba(0,0,0,0.3)] text-tx" onClick={e => e.stopPropagation()}>
+            <h3 className="text-base font-bold mb-0.5 flex justify-between items-center">
+              <span>📊 Bulk Models Upload</span>
+            </h3>
+            <p className="text-[11px] text-t3 mb-4">Upload models with columns: &apos;Model Name&apos;, &apos;Model Series&apos;, &apos;Icon&apos;.</p>
+            
+            <div className={`mb-4 transition-all ${xMods.length > 0 ? 'hidden' : 'block'}`}>
+              <label className="w-full relative flex items-center justify-center p-6 border-2 border-dashed border-bd2 rounded-[11px] cursor-pointer hover:border-[#2ee89d] transition-colors bg-[rgba(0,0,0,0.2)]">
+                <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".xlsx,.xls,.csv" onChange={handleUploadExcelMods} />
+                <div className="text-center font-semibold text-[13px] text-t3 flex flex-col items-center gap-2">
+                  <Icons.up className="w-6 h-6 text-or" />
+                  <span>Click or drag to upload Excel file</span>
+                </div>
+              </label>
+            </div>
+
+            {xMods.length > 0 && (
+              <div className="mb-2 text-[12px]">
+                <div className="flex justify-between items-center mb-3">
+                   <p className="font-bold text-[#2ee89d]">✓ {xMods.length} Models Loaded</p>
+                   <button className="text-[10px] text-or bg-transparent cursor-pointer border-0" onClick={() => setXMods([])}>Clear</button>
+                </div>
+                <div className="max-h-[300px] overflow-y-auto border border-bd rounded-lg">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-sf sticky top-0 z-10">
+                      <tr>
+                        <th className="p-2 border-b border-bd font-semibold">Name</th>
+                        <th className="p-2 border-b border-bd font-semibold">Series</th>
+                        <th className="p-2 border-b border-bd font-semibold">Icon</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {xMods.map((xm: any, i: number) => (
+                        <tr key={i} className="border-b border-bd">
+                          <td className="p-2">{xm.nm}</td>
+                          <td className="p-2 text-t3">{xm.sr}</td>
+                          <td className="p-2">{xm.ic}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <button className="w-full p-3 bg-gradient-to-br from-[#2ee89d] to-[#1bb377] border-none rounded-[11px] text-[#111] text-sm font-bold cursor-pointer transition-transform active:scale-95 mt-4" onClick={() => handleAction('apply-excel-mods')}>
+                  Save {xMods.length} Models
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {mo === 'amod' && (
          <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] z-[200] flex items-center justify-center p-4 animate-[fi_0.15s] backdrop-blur-[3px]" onClick={() => handleAction('cm')}>
           <div className="bg-bg-sec border border-bd2 rounded-[18px] p-[22px_20px] w-full max-w-[400px] animate-[su_0.25s] shadow-[0_16px_44px_rgba(0,0,0,0.3)] text-tx" onClick={e => e.stopPropagation()}>
@@ -1228,6 +1584,11 @@ export function AdminApp() {
             <input className="w-full p-3 bg-bd border-[1.5px] border-bd2 rounded-[11px] text-tx text-[13px] mb-2 focus:border-or outline-none" placeholder="Reward Name (e.g. Amazon ₹500)" value={rn} onChange={e=>setRn(e.target.value)} />
             <input type="number" className="w-full p-3 bg-bd border-[1.5px] border-bd2 rounded-[11px] text-tx text-[13px] mb-2 focus:border-or outline-none" placeholder="Points Required" value={rp} onChange={e=>setRp(e.target.value)} />
             <input type="number" className="w-full p-3 bg-bd border-[1.5px] border-bd2 rounded-[11px] text-tx text-[13px] mb-2 focus:border-or outline-none" placeholder="Initial Stock" value={rs} onChange={e=>setRs(e.target.value)} />
+            <div className="relative mb-2">
+               <input type="date" className={`w-full p-3 bg-bd border-[1.5px] border-bd2 rounded-[11px] text-tx text-[13px] focus:border-or outline-none appearance-none cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer ${!rx ? 'text-t3' : ''}`} placeholder="Expiry Date (Optional)" value={rx} onChange={e=>setRx(e.target.value)} />
+               <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-t3"><Icons.tgt className="w-4 h-4 opacity-50" /></div>
+               {!rx && <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-t3 text-[13px]">Expiry Date (Optional)</span>}
+            </div>
             <select className="w-full p-3 bg-bd border-[1.5px] border-bd2 rounded-[11px] text-tx text-[13px] mb-2 focus:border-or outline-none appearance-none" value={rc} onChange={e=>setRc(e.target.value)}>
               <option value="Electronics">Electronics</option>
               <option value="Gift Cards">Gift Cards</option>
@@ -1245,6 +1606,92 @@ export function AdminApp() {
           setMo('');
         }} onClose={() => setMo('')} />
       )}
+
+      {mo === 'mgr-det' && md.mid && (() => {
+         const mgr = state.db.mgrs.find((m: any) => m.id === md.mid);
+         if (!mgr) return null;
+         const targets = mgr.targets || {};
+         // Group by model, and also by series
+         const tA = Object.values(targets).reduce((s: any, t: any) => s + (t.ach || 0), 0) as number;
+         const tT = Object.values(targets).reduce((s: any, t: any) => s + (t.tgt || 0), 0) as number;
+         const pct = tT ? Math.round((tA / tT) * 100) : 0;
+         
+         const srStats: any = {};
+         state.db.models.forEach((mod: any) => {
+            if (!srStats[mod.sr]) srStats[mod.sr] = { sr: mod.sr, tT: 0, tA: 0 };
+            const mTargets = (targets as any)[mod.id] || {};
+            srStats[mod.sr].tT += (mTargets.tgt || 0);
+            srStats[mod.sr].tA += (mTargets.ach || 0);
+         });
+
+         return (
+          <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] z-[200] flex items-center justify-center p-4 animate-[fi_0.15s] backdrop-blur-[3px]" onClick={() => handleAction('cm')}>
+            <div className="bg-bg-sec border border-bd2 rounded-[18px] p-[22px_20px] w-full max-w-[600px] max-h-[90vh] overflow-y-auto animate-[su_0.25s] shadow-[0_16px_44px_rgba(0,0,0,0.3)] text-tx" onClick={e => e.stopPropagation()}>
+              <div className="flex justify-between items-start mb-4">
+                 <div>
+                   <h3 className="text-[17px] font-extrabold text-tx mb-1 flex items-center gap-2">{mgr.nm} <span className="text-[10px] text-t3 font-mono font-normal">#{mgr.id}</span></h3>
+                   <p className="text-[11px] text-t3">{mgr.store} ({mgr.area}) · {mgr.ph}</p>
+                 </div>
+                 <div className="text-right">
+                    <p className="text-[15px] font-bold font-mono text-or">{mgr.pts.toLocaleString()} pts</p>
+                    <p className="text-[10px] text-t3 font-semibold uppercase tracking-wider">{pct}% Achieved</p>
+                 </div>
+              </div>
+              
+              <div className="flex gap-2 mb-4">
+                <button className="flex-1 py-2 bg-[rgba(212,140,85,0.1)] text-or rounded-xl text-xs font-bold cursor-pointer border-0" onClick={() => handleAction('ap', mgr.id)}>Give Points</button>
+                <button className="flex-1 py-2 bg-[rgba(46,232,157,0.1)] text-[#2ee89d] rounded-xl text-xs font-bold cursor-pointer border-0" onClick={() => handleAction('at', mgr.id)}>Edit Targets</button>
+              </div>
+
+              <h4 className="text-[13px] font-extrabold uppercase text-t3 mb-2 tracking-wider">Series Wise</h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-5">
+                 {Object.values(srStats).map((st: any, i: number) => {
+                    const spct = st.tT ? Math.round((st.tA / st.tT) * 100) : 0;
+                    return (
+                      <div key={i} className="bg-sf border border-bd rounded-xl p-2.5 flex flex-col justify-between">
+                         <p className="text-[11px] font-bold text-tx mb-1">{st.sr}</p>
+                         <div className="flex justify-between items-end">
+                            <span className="text-[10px] text-t3 font-mono">{st.tA} / {st.tT}</span>
+                            <span className={`text-[11px] font-bold font-mono ${spct >= 100 ? 'text-[#2ee89d]' : spct >= 80 ? 'text-or' : 'text-[#ff5a65]'}`}>{spct}%</span>
+                         </div>
+                      </div>
+                    )
+                 })}
+              </div>
+
+              <h4 className="text-[13px] font-extrabold uppercase text-t3 mb-2 tracking-wider">Model Wise</h4>
+              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                 {state.db.models.map((mod: any) => {
+                    const mTargets = (targets as any)[mod.id] || {};
+                    const tT = mTargets.tgt || 0;
+                    const tA = mTargets.ach || 0;
+                    const mpct = tT ? Math.round((tA / tT) * 100) : 0;
+                    return (
+                      <div key={mod.id} className="flex justify-between items-center p-2.5 border border-bd rounded-xl bg-sf">
+                         <div className="flex items-center gap-2">
+                            <span className="text-xl" style={{color: mod.cl}}>{mod.ic}</span>
+                            <div>
+                               <p className="text-[11px] font-bold text-tx leading-tight">{mod.nm}</p>
+                               <p className="text-[9px] text-t3">{mod.sr}</p>
+                            </div>
+                         </div>
+                         <div className="flex items-center gap-4">
+                            <div className="text-right">
+                               <p className="text-[10px] text-t3 font-mono">{tA} / {tT}</p>
+                            </div>
+                            <div className={`text-[12px] font-bold font-mono w-[40px] text-right ${mpct >= 100 ? 'text-[#2ee89d]' : mpct >= 80 ? 'text-or' : 'text-[#ff5a65]'}`}>
+                               {mpct}%
+                            </div>
+                         </div>
+                      </div>
+                    )
+                 })}
+              </div>
+
+            </div>
+          </div>
+         );
+      })()}
 
       {mo === 'edit-pol' && ePol && (
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.6)] backdrop-blur-sm z-[200] flex items-center p-4 lg:p-0 lg:justify-center">

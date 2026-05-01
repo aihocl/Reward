@@ -30,8 +30,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Load from local storage
-    const storedDb = localStorage.getItem('hmpl_v6_db');
-    const storedUser = localStorage.getItem('hmpl_v6_user');
+    const storedDb = localStorage.getItem('hmpl_v7_db');
+    const storedUser = localStorage.getItem('hmpl_v7_user');
     const storedTheme = localStorage.getItem('hmpl_t');
 
     const initialState: AppState = {
@@ -51,8 +51,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (mounted) {
-      localStorage.setItem('hmpl_v6_db', JSON.stringify(state.db));
-      localStorage.setItem('hmpl_v6_user', JSON.stringify(state.user));
+      localStorage.setItem('hmpl_v7_db', JSON.stringify(state.db));
+      localStorage.setItem('hmpl_v7_user', JSON.stringify(state.user));
       localStorage.setItem('hmpl_t', state.theme);
       
       document.documentElement.setAttribute('data-theme', state.theme);
