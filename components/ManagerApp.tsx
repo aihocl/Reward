@@ -94,14 +94,14 @@ export function ManagerApp() {
 
     return (
       <>
-        <div className="rounded-[24px] p-6 my-2 mb-4 relative overflow-hidden shadow-[0_12px_40px_rgba(26,16,64,0.6)] border-0 bg-gradient-to-b from-[#1a1040] to-[#100a28] animate-[su_0.4s_ease]">
-          <div className="absolute top-[-50%] right-[-30%] w-[300px] h-[300px] rounded-full bg-[radial-gradient(circle,rgba(212,140,85,0.08),transparent_70%)] pointer-events-none"></div>
+        <div className="rounded-[24px] p-6 my-2 mb-4 relative overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.8)] border border-white/5 bg-gradient-to-b from-[#111111] to-[#0A0A0A] animate-[su_0.4s_ease]">
+          <div className="absolute top-[-50%] right-[-30%] w-[300px] h-[300px] rounded-full bg-[radial-gradient(circle,rgba(255,215,0,0.06),transparent_70%)] pointer-events-none"></div>
           <div className="absolute bottom-[-30%] left-[-20%] w-[200px] h-[200px] rounded-full bg-[radial-gradient(circle,rgba(155,122,255,0.05),transparent_70%)] pointer-events-none"></div>
           
           <div className="flex justify-between items-start relative z-10 mb-6">
             <div>
                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-or font-mono mb-1">Available Points</p>
-               <h1 className="text-[44px] font-black bg-gradient-to-r from-yellow-400 to-[#ff9d00] bg-clip-text text-transparent leading-[1.1] tracking-tighter drop-shadow-sm">{m.pts.toLocaleString()}</h1>
+               <h1 className="text-[44px] font-black bg-gradient-to-r from-[#FFD700] to-[#CD7F32] bg-clip-text text-transparent leading-[1.1] tracking-tighter drop-shadow-sm">{m.pts.toLocaleString()}</h1>
                <p className="text-[12px] font-medium text-t2 mt-1">{m.store} · {m.area}</p>
             </div>
             
@@ -231,7 +231,7 @@ export function ManagerApp() {
         <h2 className="text-lg font-extrabold my-3.5 tracking-tight">Leaderboard</h2>
         <div className="flex gap-0 mb-4 rounded-xl border border-bd2 overflow-hidden">
           {['area', 'state', 'global'].map(t => (
-            <button key={t} className={`flex-1 py-2 text-center text-[11px] font-bold cursor-pointer border-0 transition-colors ${lbTab === t ? 'bg-gradient-to-br from-[#ff6b9d] to-[#c44dff] text-white' : 'bg-sf text-t3'}`} onClick={() => setLbTab(t)}>
+            <button key={t} className={`flex-1 py-2 text-center text-[11px] font-bold cursor-pointer border-0 transition-colors ${lbTab === t ? 'bg-[#FFD700] text-black shadow-[0_0_15px_rgba(255,215,0,0.3)]' : 'bg-transparent text-t3'}`} onClick={() => setLbTab(t)}>
               {t.charAt(0).toUpperCase() + t.slice(1)}
             </button>
           ))}
@@ -357,8 +357,8 @@ export function ManagerApp() {
       <>
         <h2 className="text-lg font-extrabold my-3.5 tracking-tight">Rewards</h2>
         <div className="flex gap-2 mb-4 bg-bg-sec p-1 rounded-[14px]">
-           <button className={`flex-1 py-2 text-xs font-bold rounded-[11px] cursor-pointer transition-colors border-0 ${rwTb === 'inv' ? 'bg-[#2ee89d] text-[#111] shadow-sm' : 'bg-transparent text-t2'}`} onClick={() => setRwTb('inv')}>Explore</button>
-           <button className={`flex-1 py-2 text-xs font-bold rounded-[11px] cursor-pointer transition-colors border-0 flex items-center justify-center gap-1.5 ${rwTb === 'red' ? 'bg-[#2ee89d] text-[#111] shadow-sm' : 'bg-transparent text-t2'}`} onClick={() => setRwTb('red')}>My Redemptions {myReds.length > 0 && <span className={`px-1.5 py-0.5 rounded-[5px] text-[8px] ${rwTb === 'red' ? 'bg-[#111] text-[#2ee89d]' : 'bg-[rgba(255,255,255,0.05)] text-t3'}`}>{myReds.length}</span>}</button>
+           <button className={`flex-1 py-2 text-xs font-bold rounded-[11px] cursor-pointer transition-colors border-0 ${rwTb === 'inv' ? 'bg-[#FFD700] text-[#111] shadow-sm' : 'bg-transparent text-t2'}`} onClick={() => setRwTb('inv')}>Explore</button>
+           <button className={`flex-1 py-2 text-xs font-bold rounded-[11px] cursor-pointer transition-colors border-0 flex items-center justify-center gap-1.5 ${rwTb === 'red' ? 'bg-[#FFD700] text-[#111] shadow-sm' : 'bg-transparent text-t2'}`} onClick={() => setRwTb('red')}>My Redemptions {myReds.length > 0 && <span className={`px-1.5 py-0.5 rounded-[5px] text-[8px] ${rwTb === 'red' ? 'bg-[#111] text-[#FFD700]' : 'bg-[rgba(255,255,255,0.05)] text-t3'}`}>{myReds.length}</span>}</button>
         </div>
         
         {rwTb === 'inv' && (
@@ -462,7 +462,7 @@ export function ManagerApp() {
     return (
       <>
         <div className="bg-bg-sec border border-bd rounded-2xl p-5 my-3 text-center shadow-sh">
-          <div className="w-[68px] h-[68px] rounded-full bg-gradient-to-br from-or to-[#e8a040] flex items-center justify-center text-[22px] font-extrabold text-white mx-auto mb-2 shadow-[0_6px_20px_rgba(212,140,85,0.3)] relative">
+          <div className="w-[68px] h-[68px] rounded-full bg-gradient-to-br from-[#CD7F32] to-[#FFD700] flex items-center justify-center text-[22px] font-extrabold text-[#111] mx-auto mb-2 shadow-[0_6px_20px_rgba(255,215,0,0.3)] relative">
             {rnk === 1 && <span className="absolute -top-3.5 text-xl">👑</span>}
             {m.av}
           </div>
@@ -523,7 +523,7 @@ export function ManagerApp() {
       return (
         <>
           <div className="fixed inset-0 bg-[rgba(0,0,0,0.55)] z-[200] animate-[fi_0.15s] backdrop-blur-[3px]" onClick={() => setModelSh(null)}></div>
-          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-bg-sec rounded-t-[22px] z-[201] animate-[su_0.3s] max-h-[88vh] overflow-y-auto shadow-[0_-8px_40px_rgba(0,0,0,0.3)] pb-[env(safe-area-inset-bottom)]">
+          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-bg-sec rounded-t-[32px] z-[201] animate-[su_0.3s] max-h-[88vh] overflow-y-auto shadow-[0_-15px_50px_rgba(0,0,0,0.9)] border-t border-white/5 pb-[env(safe-area-inset-bottom)]">
             <div className="w-[34px] h-1 rounded-full bg-t3 mx-auto mt-2.5"></div>
             <div className="py-4 px-5 flex items-center gap-3">
               <div className="w-14 h-14 rounded-xl flex items-center justify-center text-[28px] shrink-0" style={{ background: mod?.bg, color: mod?.cl }}>{mod?.ic}</div>
@@ -573,7 +573,7 @@ export function ManagerApp() {
         return (
           <>
             <div className="fixed inset-0 bg-[rgba(0,0,0,0.55)] z-[200] animate-[fi_0.15s] backdrop-blur-[3px]" onClick={() => setSh(null)}></div>
-            <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-bg-sec rounded-t-[22px] z-[201] animate-[su_0.3s] max-h-[88vh] overflow-y-auto shadow-[0_-8px_40px_rgba(0,0,0,0.3)] pb-[env(safe-area-inset-bottom)]">
+            <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-bg-sec rounded-t-[32px] z-[201] animate-[su_0.3s] max-h-[88vh] overflow-y-auto shadow-[0_-15px_50px_rgba(0,0,0,0.9)] border-t border-white/5 pb-[env(safe-area-inset-bottom)]">
               <div className="w-[34px] h-1 rounded-full bg-t3 mx-auto mt-2.5"></div>
               <div className="py-4 px-5 flex items-center gap-3">
                 <div className="w-14 h-14 rounded-xl flex items-center justify-center text-[28px] shrink-0" style={{ background: b.bg }}>{b.ic}</div>
@@ -624,7 +624,7 @@ export function ManagerApp() {
     <div className="max-w-[480px] mx-auto min-h-[100dvh] relative text-tx flex flex-col">
       <div className="sticky top-0 z-50 pt-3 px-4 flex items-center justify-between bg-gradient-to-b from-bg-prime/100 to-transparent pb-4">
         <div>
-          <p className="text-[12px] uppercase tracking-wider font-extrabold bg-gradient-to-r from-green-400 to-[#1bb377] bg-clip-text text-transparent inline-flex items-center gap-1"><HMPLLogo className="w-3.5 h-3.5 text-green-400 drop-shadow-[0_0_2px_rgba(46,232,157,0.8)]" /> HMPL Rewards</p>
+          <p className="text-[12px] uppercase tracking-wider font-extrabold bg-gradient-to-r from-[#FFD700] to-[#CD7F32] bg-clip-text text-transparent inline-flex items-center gap-1"><HMPLLogo className="w-3.5 h-3.5 text-[#FFD700]" /> HMPL Rewards</p>
           <p className="text-base font-extrabold">{m.nm}</p>
         </div>
         <div className="flex gap-1.5">
@@ -680,7 +680,7 @@ export function ManagerApp() {
         )}
       </div>
 
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-[rgba(16,10,40,0.95)] border-t border-bd flex p-[3px_5px] pb-[max(7px,env(safe-area-inset-bottom))] backdrop-blur-md z-[100]">
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-[rgba(10,10,10,0.85)] border-t border-white/10 flex p-[3px_5px] pb-[max(7px,env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-10px_40px_rgba(0,0,0,0.8)] z-[100]">
         {[
           {id:'home',i:Icons.home,l:'Home'},
           {id:'upload',i:Icons.up,l:'Upload'},
@@ -701,7 +701,7 @@ export function ManagerApp() {
       {epMo && (
         <>
           <div className="fixed inset-0 bg-[rgba(0,0,0,0.55)] z-[200] animate-[fi_0.15s] backdrop-blur-[3px]" onClick={() => setEpMo(false)}></div>
-          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-bg-sec rounded-t-[22px] z-[201] animate-[su_0.3s] max-h-[88vh] overflow-y-auto shadow-[0_-8px_40px_rgba(0,0,0,0.3)] pb-[env(safe-area-inset-bottom)] text-tx px-5 pt-4">
+          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-bg-sec rounded-t-[32px] z-[201] animate-[su_0.3s] max-h-[88vh] overflow-y-auto shadow-[0_-15px_50px_rgba(0,0,0,0.9)] border-t border-white/5 pb-[env(safe-area-inset-bottom)] text-tx px-5 pt-4">
             <div className="w-[34px] h-1 rounded-full bg-t3 mx-auto mt-2 mb-4 absolute left-1/2 -translate-x-1/2 top-0 pointer-events-none"></div>
             <h3 className="text-lg font-extrabold mb-1 mt-3">Edit Profile</h3>
             <p className="text-[11px] text-t3 mb-4">Update your personal details.</p>

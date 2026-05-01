@@ -681,7 +681,7 @@ export function AdminApp() {
       <div className="flex justify-between items-center mb-3 flex-wrap gap-[7px]">
         <h1 className="text-xl font-extrabold text-tx">Managers</h1>
         <div className="flex gap-[6px]">
-          <button className="bg-gradient-to-br from-or to-[#e8a040] text-white border-0 px-3 py-[7px] text-[11px] font-bold rounded-xl flex items-center gap-1 cursor-pointer active:scale-95" onClick={() => handleAction('am')}><Icons.pls className="w-3 h-3" /> Add</button>
+          <button className="bg-gradient-to-br from-[#FFD700] to-[#CD7F32] text-[#111] border-0 px-3 py-[7px] text-[11px] font-bold rounded-xl flex items-center gap-1 cursor-pointer active:scale-95" onClick={() => handleAction('am')}><Icons.pls className="w-3 h-3" /> Add</button>
           <button className="bg-transparent border-[1.5px] border-bd2 text-t2 px-3 py-[7px] text-[11px] font-bold rounded-xl flex items-center gap-1 cursor-pointer active:scale-95" onClick={() => handleAction('excel')}><Icons.up className="w-3 h-3" /> Excel</button>
         </div>
       </div>
@@ -888,7 +888,7 @@ export function AdminApp() {
     <>
       <div className="flex justify-between items-center mb-4 flex-wrap gap-[7px]">
         <h1 className="text-xl font-extrabold text-tx">Rewards</h1>
-        <button className="bg-gradient-to-br from-[#2ee89d] to-[#1bb377] text-[#111] px-4 py-2 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer shadow-md transition-transform active:scale-95 border-0" onClick={() => setMo('arw')}>
+        <button className="bg-gradient-to-br from-[#FFD700] to-[#CD7F32] text-[#111] px-4 py-2 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer shadow-md transition-transform active:scale-95 border-0" onClick={() => setMo('arw')}>
           <Icons.pls className="w-3.5 h-3.5" /> New Reward
         </button>
       </div>
@@ -1010,7 +1010,7 @@ export function AdminApp() {
       <>
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-xl font-extrabold text-tx">Reward Policy</h1>
-          <button className="bg-gradient-to-br from-[#2ee89d] to-[#1bb377] text-[#111] px-4 py-2 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer shadow-md transition-transform active:scale-95" onClick={() => handleAction('start-pol')}>
+          <button className="bg-gradient-to-br from-[#FFD700] to-[#CD7F32] text-[#111] px-4 py-2 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer shadow-md transition-transform active:scale-95" onClick={() => handleAction('start-pol')}>
             <Icons.set className="w-3.5 h-3.5" /> Edit Policy
           </button>
         </div>
@@ -1317,10 +1317,10 @@ export function AdminApp() {
     <div className="flex min-h-screen max-w-[1200px] mx-auto text-tx bg-bg-prime relative">
       <div className="w-[210px] bg-bg-sec border-r border-bd py-5 fixed h-screen overflow-y-auto flex-col hidden md:flex">
         <div className="px-4 pb-4 flex items-center gap-2 border-b border-bd mb-1.5">
-          <div className="w-8 h-8 rounded-[9px] bg-gradient-to-br from-or to-[#e8a040] flex items-center justify-center shrink-0">
-             <Icons.trp className="w-3.5 h-3.5 text-white" />
+          <div className="w-8 h-8 rounded-[9px] bg-gradient-to-br from-[#FFD700] to-[#CD7F32] flex items-center justify-center shrink-0">
+             <Icons.trp className="w-3.5 h-3.5 text-[#111]" />
           </div>
-          <div><p className="text-[14px] font-extrabold uppercase tracking-tight bg-gradient-to-r from-green-400 to-[#1bb377] bg-clip-text text-transparent flex items-center gap-1"><HMPLLogo className="w-4 h-4 text-green-400 drop-shadow-[0_0_2px_rgba(46,232,157,0.8)]" /> HMPL Rewards</p><p className="text-[9px] text-t3 uppercase font-semibold">Admin Panel</p></div>
+           <div><p className="text-[14px] font-extrabold uppercase tracking-tight bg-gradient-to-r from-[#FFD700] to-[#CD7F32] bg-clip-text text-transparent flex items-center gap-1"><HMPLLogo className="w-4 h-4 text-[#FFD700]" /> HMPL Rewards</p><p className="text-[9px] text-t3 uppercase font-semibold">Admin Panel</p></div>
         </div>
         {tabs.map(t => (
           <button key={t.id} className={`w-full py-2.5 px-4 bg-transparent border-0 border-l-[3px] text-[12px] font-semibold cursor-pointer text-left flex items-center gap-2 transition-colors ${at === t.id ? 'bg-[rgba(212,140,85,0.06)] border-or text-or' : 'border-transparent text-t3 hover:bg-sf'}`} onClick={() => {setAt(t.id); setSr('');}}>
@@ -1362,7 +1362,7 @@ export function AdminApp() {
             <p className="text-[11px] text-t3 mb-3.5">{state.db.mgrs.find((m: any) => m.id === md.mid)?.nm}</p>
             <input type="number" className="w-full p-3 bg-bd border-[1.5px] border-bd2 rounded-[11px] text-tx text-[13px] mb-2 focus:border-or outline-none" placeholder="Amount" value={pv} onChange={e=>setPv(e.target.value)} />
             <input className="w-full p-3 bg-bd border-[1.5px] border-bd2 rounded-[11px] text-tx text-[13px] mb-2 focus:border-or outline-none" placeholder="Reason" value={pr} onChange={e=>setPr(e.target.value)} />
-            <button className="w-full p-3 bg-gradient-to-br from-or to-[#e8a040] border-none rounded-[11px] text-white text-sm font-bold cursor-pointer transition-transform active:scale-95 mt-1" onClick={() => handleAction('sp')}>Submit</button>
+            <button className="w-full p-3 bg-gradient-to-br from-[#FFD700] to-[#CD7F32] border-none rounded-[11px] text-[#111] text-sm font-bold cursor-pointer transition-transform active:scale-95 mt-1" onClick={() => handleAction('sp')}>Submit</button>
           </div>
         </div>
       )}
@@ -1390,7 +1390,7 @@ export function AdminApp() {
               ))}
             </div>
 
-            <button className="w-full p-3 bg-gradient-to-br from-or to-[#e8a040] border-none rounded-[11px] text-white text-sm font-bold cursor-pointer transition-transform active:scale-95 mt-1" onClick={() => handleAction('sm')}>Add</button>
+            <button className="w-full p-3 bg-gradient-to-br from-[#FFD700] to-[#CD7F32] border-none rounded-[11px] text-[#111] text-sm font-bold cursor-pointer transition-transform active:scale-95 mt-1" onClick={() => handleAction('sm')}>Add</button>
           </div>
         </div>
       )}
@@ -1428,7 +1428,7 @@ export function AdminApp() {
               })}
             </div>
             
-            <button className="w-full p-3 bg-gradient-to-br from-[#2ee89d] to-[#1bb377] border-none rounded-[11px] text-[#111] text-sm font-bold cursor-pointer transition-transform active:scale-95 mt-4" onClick={() => handleAction('st')}>Save Targets</button>
+            <button className="w-full p-3 bg-gradient-to-br from-[#FFD700] to-[#CD7F32] border-none rounded-[11px] text-[#111] text-sm font-bold cursor-pointer transition-transform active:scale-95 mt-4" onClick={() => handleAction('st')}>Save Targets</button>
           </div>
         </div>
       )}
@@ -1502,7 +1502,7 @@ export function AdminApp() {
                     </tbody>
                   </table>
                 </div>
-                <button className="w-full p-3 bg-gradient-to-br from-[#2ee89d] to-[#1bb377] border-none rounded-[11px] text-[#111] text-sm font-bold cursor-pointer transition-transform active:scale-95 mt-4" onClick={() => handleAction('apply-excel')}>
+                <button className="w-full p-3 bg-gradient-to-br from-[#FFD700] to-[#CD7F32] border-none rounded-[11px] text-[#111] text-sm font-bold cursor-pointer transition-transform active:scale-95 mt-4" onClick={() => handleAction('apply-excel')}>
                   Save Targets for {xTgts.length} Managers
                 </button>
               </div>
@@ -1555,7 +1555,7 @@ export function AdminApp() {
                     </tbody>
                   </table>
                 </div>
-                <button className="w-full p-3 bg-gradient-to-br from-[#2ee89d] to-[#1bb377] border-none rounded-[11px] text-[#111] text-sm font-bold cursor-pointer transition-transform active:scale-95 mt-4" onClick={() => handleAction('apply-excel-mods')}>
+                <button className="w-full p-3 bg-gradient-to-br from-[#FFD700] to-[#CD7F32] border-none rounded-[11px] text-[#111] text-sm font-bold cursor-pointer transition-transform active:scale-95 mt-4" onClick={() => handleAction('apply-excel-mods')}>
                   Save {xMods.length} Models
                 </button>
               </div>
@@ -1571,7 +1571,7 @@ export function AdminApp() {
             <p className="text-[11px] text-t3 mb-3.5">Details</p>
             <input className="w-full p-3 bg-bd border-[1.5px] border-bd2 rounded-[11px] text-tx text-[13px] mb-2 focus:border-or outline-none" placeholder="Model Name (e.g. Reno 15)" value={mdNm} onChange={e=>setMdNm(e.target.value)} />
             <input className="w-full p-3 bg-bd border-[1.5px] border-bd2 rounded-[11px] text-tx text-[13px] mb-2 focus:border-or outline-none" placeholder="Icon (emoji. e.g. 📱)" value={mdIc} onChange={e=>setMdIc(e.target.value)} />
-            <button className="w-full p-3 bg-gradient-to-br from-[#2ee89d] to-[#1bb377] border-none rounded-[11px] text-[#111] text-sm font-bold cursor-pointer transition-transform active:scale-95 mt-1" onClick={() => handleAction('save-model')}>{md && md.id ? 'Update Model' : 'Add Model'}</button>
+            <button className="w-full p-3 bg-gradient-to-br from-[#FFD700] to-[#CD7F32] border-none rounded-[11px] text-[#111] text-sm font-bold cursor-pointer transition-transform active:scale-95 mt-1" onClick={() => handleAction('save-model')}>{md && md.id ? 'Update Model' : 'Add Model'}</button>
           </div>
         </div>
       )}
@@ -1595,7 +1595,7 @@ export function AdminApp() {
               <option value="Merchandise">Merchandise</option>
               <option value="Experiences">Experiences</option>
             </select>
-            <button className="w-full p-3 bg-gradient-to-br from-[#2ee89d] to-[#1bb377] border-none rounded-[11px] text-[#111] text-sm font-bold cursor-pointer transition-transform active:scale-95 mt-1" onClick={() => handleAction('sr')}>Add Reward</button>
+            <button className="w-full p-3 bg-gradient-to-br from-[#FFD700] to-[#CD7F32] border-none rounded-[11px] text-[#111] text-sm font-bold cursor-pointer transition-transform active:scale-95 mt-1" onClick={() => handleAction('sr')}>Add Reward</button>
           </div>
         </div>
       )}
@@ -1730,7 +1730,7 @@ export function AdminApp() {
               </div>
               
               <div className="p-4 border-t border-bd bg-bg-sec shrink-0">
-                <button className="w-full py-3.5 bg-gradient-to-r from-or to-[#e8a040] text-white border-0 font-bold rounded-xl cursor-pointer shadow-[0_4px_14px_rgba(212,140,85,0.3)] active:scale-95 transition-transform" onClick={() => handleAction('save-pol')}>Save Policy Settings</button>
+                <button className="w-full py-3.5 bg-gradient-to-r from-[#FFD700] to-[#CD7F32] text-[#111] border-0 font-bold rounded-xl cursor-pointer shadow-[0_4px_14px_rgba(255,215,0,0.2)] active:scale-95 transition-transform" onClick={() => handleAction('save-pol')}>Save Policy Settings</button>
               </div>
            </div>
         </div>
