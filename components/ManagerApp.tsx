@@ -3,6 +3,9 @@
 import React, { useState } from 'react';
 import { useStore } from '@/lib/store';
 import { Icons, HMPLLogo } from './icons';
+import CountUp from 'react-countup';
+import confetti from 'canvas-confetti';
+import { motion } from 'motion/react';
 import { CTS, AREAS, TIERS, BADGES, FAQ, TERMS } from '@/lib/initial-data';
 import { uid, td } from '@/lib/utils';
 
@@ -56,6 +59,7 @@ export function ManagerApp() {
     });
     setSh(null);
     showToast(`${b.nm} redeemed!`);
+    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#FFD700', '#CD7F32', '#2ee89d'] });
   };
 
   const handleAddImei = () => {
@@ -72,6 +76,7 @@ export function ManagerApp() {
     });
     setImei('');
     showToast('IMEI submitted for approval');
+    confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 }, colors: ['#2ee89d', '#ffffff'] });
   };
 
   const handleSaveProfile = () => {
@@ -101,17 +106,26 @@ export function ManagerApp() {
           <div className="flex justify-between items-start relative z-10 mb-6">
             <div>
                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-or font-mono mb-1">Available Points</p>
-               <h1 className="text-[44px] font-black bg-gradient-to-r from-[#FFD700] to-[#CD7F32] bg-clip-text text-transparent leading-[1.1] tracking-tighter drop-shadow-sm">{m.pts.toLocaleString()}</h1>
+               <h1 className="text-[44px] font-black bg-gradient-to-r from-[#FFD700] to-[#CD7F32] bg-clip-text text-transparent leading-[1.1] tracking-tighter drop-shadow-sm">
+                 <CountUp end={m.pts} duration={1.5} separator="," />
+               </h1>
                <p className="text-[12px] font-medium text-t2 mt-1">{m.store} · {m.area}</p>
             </div>
             
             <div className="w-[100px] h-[100px] relative pointer-events-none">
               <svg width="100" height="100" viewBox="0 0 100 100" className="-rotate-90 filter drop-shadow-[0_0_8px_rgba(46,232,157,0.3)]">
                 <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,.05)" strokeWidth="6"/>
-                <circle cx="50" cy="50" r="46" fill="none" stroke={pct >= 80 ? '#2ee89d' : pct >= 50 ? 'var(--color-brand-yl)' : 'var(--color-brand-or)'} strokeWidth="6" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={off}/>
+                <motion.circle 
+                  cx="50" cy="50" r="46" fill="none" 
+                  stroke={pct >= 80 ? '#2ee89d' : pct >= 50 ? 'var(--color-brand-yl)' : 'var(--color-brand-or)'} 
+                  strokeWidth="6" strokeLinecap="round" strokeDasharray={circ} 
+                  initial={{ strokeDashoffset: circ }}
+                  animate={{ strokeDashoffset: off }}
+                  transition={{ duration: 1.5, ease: "easeOut" }}
+                />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center flex-col">
-                 <span className="text-xl font-extrabold font-mono text-white">{pct}%</span>
+                 <span className="text-xl font-extrabold font-mono text-white"><CountUp end={pct} duration={1.5} />%</span>
                  <span className="text-[7px] uppercase tracking-widest text-[#2ee89d] font-bold">Target</span>
               </div>
             </div>
@@ -153,11 +167,11 @@ export function ManagerApp() {
                   <div key={i} className="min-w-[130px] bg-bg-sec border border-bd rounded-xl p-3 shrink-0 relative overflow-hidden shadow-sh">
                      <p className="text-[11px] font-bold text-tx mb-2">{st.sr}</p>
                      <div className="h-1.5 rounded-full bg-bd overflow-hidden mb-1.5">
-                       <div className="h-full bg-lb" style={{width: `${Math.min(spct, 100)}%`}}></div>
+                       <motion.div className="h-full bg-lb" initial={{ width: 0 }} animate={{ width: `${Math.min(spct, 100)}%` }} transition={{ duration: 1, delay: i * 0.1 }}></motion.div>
                      </div>
                      <div className="flex justify-between items-end">
-                        <span className="text-[10px] text-t3 font-mono">{st.tA} / {st.tT}</span>
-                        <span className={`text-[11px] font-bold font-mono ${spct >= 100 ? 'text-[#2ee89d]' : 'text-tx'}`}>{spct}%</span>
+                        <span className="text-[10px] text-t3 font-mono"><CountUp end={st.tA} duration={1} /> / {st.tT}</span>
+                        <span className={`text-[11px] font-bold font-mono ${spct >= 100 ? 'text-[#2ee89d]' : 'text-tx'}`}><CountUp end={spct} duration={1} />%</span>
                      </div>
                   </div>
                 )
@@ -173,7 +187,7 @@ export function ManagerApp() {
             const cl = p >= 80 ? '#2ee89d' : p >= 50 ? 'var(--color-brand-yl)' : 'var(--color-brand-or)';
             
             return (
-              <div key={mod.id} className="bg-bg-sec border border-bd rounded-[18px] p-4 shadow-sh cursor-pointer transition-transform active:scale-[0.98] hover:border-[rgba(155,122,255,0.4)] flex flex-col relative overflow-hidden group" onClick={() => setModelSh(mod.id)}>
+              <motion.div key={mod.id} whileTap={{ scale: 0.98 }} className="bg-bg-sec border border-bd rounded-[18px] p-4 shadow-sh cursor-pointer hover:border-[rgba(155,122,255,0.4)] flex flex-col relative overflow-hidden group" onClick={() => setModelSh(mod.id)}>
                 <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-10 bg-gradient-to-br from-transparent to-white group-hover:opacity-20 transition-opacity pointer-events-none"></div>
                 <div className="flex justify-between items-start mb-4 relative z-10">
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[18px] shadow-sm shrink-0" style={{ background: mod.bg, color: mod.cl }}>{mod.ic}</div>
@@ -188,22 +202,22 @@ export function ManagerApp() {
                 
                 <div className="mt-auto relative z-10">
                   <div className="h-1.5 rounded-full bg-bd overflow-hidden mb-2 shadow-inner">
-                    <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${Math.min(p, 100)}%`, background: cl }}></div>
+                    <motion.div className="h-full rounded-full" style={{ background: cl }} initial={{ width: 0 }} animate={{ width: `${Math.min(p, 100)}%` }} transition={{ duration: 1.5, ease: "easeOut" }}></motion.div>
                   </div>
                   <div className="flex justify-between text-[10px] font-semibold text-t2 font-mono px-1">
                      <span className="flex flex-col"><span className="text-t3 font-sans font-normal text-[8px] uppercase leading-tight mb-0.5">Tgt</span>{t.tgt}</span>
-                     <span className="flex flex-col"><span className="text-t3 font-sans font-normal text-[8px] uppercase leading-tight mb-0.5">Done</span><span className="text-[#2ee89d]">{t.ach}</span></span>
-                     <span className="flex flex-col text-right"><span className="text-t3 font-sans font-normal text-[8px] uppercase leading-tight mb-0.5">Pend</span><span className="text-or">{Math.max(t.tgt - t.ach, 0)}</span></span>
+                     <span className="flex flex-col"><span className="text-t3 font-sans font-normal text-[8px] uppercase leading-tight mb-0.5">Done</span><span className="text-[#2ee89d]"><CountUp end={t.ach} duration={1.5} /></span></span>
+                     <span className="flex flex-col text-right"><span className="text-t3 font-sans font-normal text-[8px] uppercase leading-tight mb-0.5">Pend</span><span className="text-or"><CountUp end={Math.max(t.tgt - t.ach, 0)} duration={1.5} /></span></span>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
 
         <div className="flex justify-between items-center mb-2.5 mt-5">
           <span className="text-[13px] font-extrabold">Recent Activity</span>
-          <button className="text-[10px] text-or font-bold cursor-pointer bg-transparent border-0" onClick={() => setTab('history')}>See all</button>
+          <motion.button whileTap={{ scale: 0.9 }} className="text-[10px] text-or font-bold cursor-pointer bg-transparent border-0" onClick={() => setTab('history')}>See all</motion.button>
         </div>
         {mTx.slice(0,3).map((tx: any) => renderTx(tx))}
       </>
@@ -247,7 +261,7 @@ export function ManagerApp() {
                 {t3[1].av}
               </div>
               <p className="text-[10px] font-bold max-w-[72px] text-center whitespace-nowrap overflow-hidden text-ellipsis">{t3[1].nm}</p>
-              <p className="text-[11px] font-bold font-mono text-[#2ee89d] flex items-center gap-0.5 before:content-['⚡'] before:text-[10px]">{t3[1].pts.toLocaleString()}</p>
+              <p className="text-[11px] font-bold font-mono text-[#2ee89d] flex items-center gap-0.5 before:content-['⚡'] before:text-[10px]"><CountUp end={t3[1].pts} duration={1.5} separator="," /></p>
               <div className="rounded-t-lg flex items-end justify-center pb-1.5 text-base font-black text-white/5 w-[70px] h-[56px] bg-gradient-to-b from-[rgba(192,192,192,0.1)] to-transparent">2</div>
             </div>
           )}
@@ -259,7 +273,7 @@ export function ManagerApp() {
                 {t3[0].av}
               </div>
               <p className="text-[10px] font-bold max-w-[72px] text-center whitespace-nowrap overflow-hidden text-ellipsis">{t3[0].nm}</p>
-              <p className="text-[11px] font-bold font-mono text-[#2ee89d] flex items-center gap-0.5 before:content-['⚡'] before:text-[10px]">{t3[0].pts.toLocaleString()}</p>
+              <p className="text-[11px] font-bold font-mono text-[#2ee89d] flex items-center gap-0.5 before:content-['⚡'] before:text-[10px]"><CountUp end={t3[0].pts} duration={1.5} separator="," /></p>
               <div className="rounded-t-lg flex items-end justify-center pb-1.5 text-base font-black text-white/5 w-[70px] h-[72px] bg-gradient-to-b from-[rgba(255,215,0,0.08)] to-transparent">1</div>
             </div>
           )}
@@ -270,7 +284,7 @@ export function ManagerApp() {
                 {t3[2].av}
               </div>
               <p className="text-[10px] font-bold max-w-[72px] text-center whitespace-nowrap overflow-hidden text-ellipsis">{t3[2].nm}</p>
-              <p className="text-[11px] font-bold font-mono text-[#2ee89d] flex items-center gap-0.5 before:content-['⚡'] before:text-[10px]">{t3[2].pts.toLocaleString()}</p>
+              <p className="text-[11px] font-bold font-mono text-[#2ee89d] flex items-center gap-0.5 before:content-['⚡'] before:text-[10px]"><CountUp end={t3[2].pts} duration={1.5} separator="," /></p>
               <div className="rounded-t-lg flex items-end justify-center pb-1.5 text-base font-black text-white/5 w-[70px] h-[40px] bg-gradient-to-b from-[rgba(205,127,50,0.08)] to-transparent">3</div>
             </div>
           )}
@@ -286,7 +300,7 @@ export function ManagerApp() {
                 <p className="text-xs font-bold whitespace-nowrap overflow-hidden text-ellipsis">{g.nm}{g.id === m.id ? ' <span style="font-size:8px;color:var(--color-brand-or)">(You)</span>' : ''}</p>
                 <p className="text-[9px] text-t3">{g.store} · {g.area}</p>
               </div>
-              <span className="text-[13px] font-bold font-mono text-[#2ee89d] flex items-center gap-1 before:content-['⚡'] before:text-[10px]">{g.pts.toLocaleString()}</span>
+              <span className="text-[13px] font-bold font-mono text-[#2ee89d] flex items-center gap-1 before:content-['⚡'] before:text-[10px]"><CountUp end={g.pts} duration={1} separator="," /></span>
               <div className={`w-7 h-7 flex items-center justify-center text-base ${medalCls}`}>{medals[rn-1] || rn + 'th'}</div>
             </div>
           );
@@ -308,10 +322,10 @@ export function ManagerApp() {
         <div className="flex gap-1.5 mb-1.5">
           <input className="flex-1 p-3 bg-bd border-[1.5px] border-bd2 rounded-[11px] text-tx text-[13px] focus:border-or outline-none" 
                  placeholder="15-digit IMEI" value={imei} onChange={e => setImei(e.target.value.replace(/\D/g, ''))} maxLength={15} inputMode="numeric" />
-          <button className="px-3 rounded-[9px] border-none bg-[rgba(212,140,85,0.12)] text-or text-[11px] font-bold cursor-pointer whitespace-nowrap flex items-center gap-1 active:scale-95 transition-transform" 
+          <motion.button whileTap={{ scale: 0.95 }} className="px-3 rounded-[9px] border-none bg-[rgba(212,140,85,0.12)] text-or text-[11px] font-bold cursor-pointer whitespace-nowrap flex items-center gap-1" 
                   onClick={handleAddImei}>
             <Icons.pls className="w-3 h-3" /> Add
-          </button>
+          </motion.button>
         </div>
         <p className="text-[10px] text-t3">⚠ Requires admin approval · {state.db.policy?.basePtsPerImei || 150} pts base + model bonus</p>
       </div>
@@ -370,7 +384,7 @@ export function ManagerApp() {
           </div>
           <div className="grid grid-cols-2 gap-2 mb-3">
             {fl.map((b: any) => (
-              <div key={b.id} className="bg-bg-sec border border-bd rounded-[13px] overflow-hidden cursor-pointer shadow-sh active:scale-95 transition-transform" onClick={() => { setSh(b.id); setDm(b.dm[0]); }}>
+              <motion.div key={b.id} whileTap={{ scale: 0.95 }} className="bg-bg-sec border border-bd rounded-[13px] overflow-hidden cursor-pointer shadow-sh" onClick={() => { setSh(b.id); setDm(b.dm[0]); }}>
                 <div className="h-[76px] flex items-center justify-center text-[28px] relative" style={{ background: b.bg }}>
                   {b.tg && (
                     <span className="absolute top-[5px] right-[5px] px-1.5 py-[2px] rounded-[5px] text-[7px] font-bold tracking-wider" 
@@ -387,7 +401,7 @@ export function ManagerApp() {
                     <span className="text-t3">{b.sk} left</span>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </>
@@ -433,9 +447,9 @@ export function ManagerApp() {
         <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl shrink-0" style={{ background: `${tier.cl}20` }}>{tier.ic}</div>
         <div className="flex-1">
           <h4 className="text-sm font-bold">{tier.nm} Tier</h4>
-          <p className="text-[10px] text-t3">{m.pts.toLocaleString()} points</p>
+          <p className="text-[10px] text-t3"><CountUp end={m.pts} duration={1.5} separator="," /> points</p>
           <div className="h-1.5 rounded-full bg-bd mt-1.5 w-full overflow-hidden">
-            <div className="h-full rounded-full" style={{ width: `${Math.min((m.pts/10000)*100,100)}%`, background: tier.cl }}></div>
+            <motion.div className="h-full rounded-full" initial={{ width: 0 }} animate={{ width: `${Math.min((m.pts/10000)*100,100)}%` }} transition={{ duration: 1.5, ease: "easeOut" }} style={{ background: tier.cl }}></motion.div>
           </div>
         </div>
       </div>
@@ -470,43 +484,54 @@ export function ManagerApp() {
           <p className="text-[10px] text-t3 font-mono">{tier.ic} {tier.nm} · {m.area}</p>
           <p className="text-[11px] text-t2">{m.store}</p>
           
-          <div className="grid grid-cols-3 gap-2 mt-3">
+          {(m.email || m.addr || m.social) && (
+            <div className="mt-4 pt-3 border-t border-bd text-left">
+              <h4 className="text-[10px] font-bold text-t3 uppercase tracking-wider mb-2">Contact Details</h4>
+              {m.email && <div className="text-[11px] mb-1.5 flex items-center gap-2"><Icons.info className="w-3.5 h-3.5 text-t2 shrink-0" /><span className="truncate">{m.email}</span></div>}
+              {m.addr && <div className="text-[11px] mb-1.5 flex items-start gap-2"><Icons.map className="w-3.5 h-3.5 text-t2 shrink-0 mt-0.5" /><span className="truncate">{m.addr}</span></div>}
+              {m.social && <div className="text-[11px] mb-1.5 flex items-center gap-2"><Icons.cn className="w-3.5 h-3.5 text-t2 shrink-0" /><a href={m.social.startsWith('http') ? m.social : `https://${m.social}`} target="_blank" rel="noopener noreferrer" className="text-lb truncate">{m.social}</a></div>}
+            </div>
+          )}
+          
+          <div className="grid grid-cols-3 gap-2 mt-4">
             <div className="text-center">
-              <p className="text-base font-bold font-mono text-or">{m.pts.toLocaleString()}</p>
+              <p className="text-base font-bold font-mono text-or"><CountUp end={m.pts} duration={1.5} separator="," /></p>
               <p className="text-[8px] text-t3 uppercase tracking-[0.06em] font-semibold">Points</p>
             </div>
             <div className="text-center">
-              <p className="text-base font-bold font-mono text-[#2ee89d]">{m.approvedImei}</p>
+              <p className="text-base font-bold font-mono text-[#2ee89d]"><CountUp end={m.approvedImei} duration={1.5} /></p>
               <p className="text-[8px] text-t3 uppercase tracking-[0.06em] font-semibold">Approved</p>
             </div>
             <div className="text-center">
-              <p className="text-base font-bold font-mono text-yl">{m.pendingImei}</p>
+              <p className="text-base font-bold font-mono text-yl"><CountUp end={m.pendingImei} duration={1.5} /></p>
               <p className="text-[8px] text-t3 uppercase tracking-[0.06em] font-semibold">Pending</p>
             </div>
           </div>
           
-          <button className="mt-4 w-full py-2 bg-[rgba(212,140,85,0.1)] border border-[rgba(212,140,85,0.2)] rounded-lg text-xs font-bold text-or cursor-pointer transition-colors hover:bg-[rgba(212,140,85,0.2)]" onClick={() => { setEpData({ email: m.email||'', dob: m.dob||'', addr: m.addr||'', social: m.social||'' }); setEpMo(true); }}>Edit Profile Details</button>
+          <button className="mt-5 w-full py-2.5 bg-[rgba(212,140,85,0.1)] border border-[rgba(212,140,85,0.2)] rounded-lg text-xs font-bold text-or cursor-pointer transition-colors hover:bg-[rgba(212,140,85,0.2)] flex items-center justify-center gap-1.5" onClick={() => { setEpData({ email: m.email||'', dob: m.dob||'', addr: m.addr||'', social: m.social||'' }); setEpMo(true); }}>
+            <Icons.set className="w-3.5 h-3.5" /> Edit Profile Details
+          </button>
         </div>
         
-        <div className="flex items-center gap-2.5 p-[11px_13px] bg-sf border border-bd rounded-xl cursor-pointer text-tx mb-1.5 active:scale-[0.98] transition-transform" onClick={() => setTab('history')}>
+        <div className="flex items-center gap-2.5 p-[11px_13px] bg-sf border border-bd rounded-xl cursor-pointer text-tx mb-1.5" onClick={() => setTab('history')}>
           <Icons.clk className="w-[18px] h-[18px]" /> <span className="flex-1 text-xs font-semibold">Points History</span> <Icons.ar className="w-3 h-3 rotate-180" />
         </div>
-        <div className="flex items-center gap-2.5 p-[11px_13px] bg-sf border border-bd rounded-xl cursor-pointer text-tx mb-1.5 active:scale-[0.98] transition-transform" onClick={() => setTab('rewards')}>
+        <div className="flex items-center gap-2.5 p-[11px_13px] bg-sf border border-bd rounded-xl cursor-pointer text-tx mb-1.5" onClick={() => setTab('rewards')}>
           <Icons.gift className="w-[18px] h-[18px]" /> <span className="flex-1 text-xs font-semibold">My Rewards</span> <Icons.ar className="w-3 h-3 rotate-180" />
         </div>
-        <div className="flex items-center gap-2.5 p-[11px_13px] bg-sf border border-bd rounded-xl cursor-pointer text-tx mb-1.5 active:scale-[0.98] transition-transform" onClick={() => setTab('badges')}>
+        <div className="flex items-center gap-2.5 p-[11px_13px] bg-sf border border-bd rounded-xl cursor-pointer text-tx mb-1.5" onClick={() => setTab('badges')}>
           <Icons.star className="w-[18px] h-[18px]" /> <span className="flex-1 text-xs font-semibold">Badges & Tier</span> <Icons.ar className="w-3 h-3 rotate-180" />
         </div>
-        <div className="flex items-center gap-2.5 p-[11px_13px] bg-sf border border-bd rounded-xl cursor-pointer text-tx mb-1.5 active:scale-[0.98] transition-transform" onClick={() => setTab('faq')}>
+        <div className="flex items-center gap-2.5 p-[11px_13px] bg-sf border border-bd rounded-xl cursor-pointer text-tx mb-1.5" onClick={() => setTab('faq')}>
           <Icons.info className="w-[18px] h-[18px]" /> <span className="flex-1 text-xs font-semibold">FAQ & Terms</span> <Icons.ar className="w-3 h-3 rotate-180" />
         </div>
-        <div className="flex items-center gap-2.5 p-[11px_13px] bg-sf border border-bd rounded-xl cursor-pointer text-tx mb-1.5 active:scale-[0.98] transition-transform" onClick={() => setTheme(state.theme === 'dark' ? 'light' : 'dark')}>
+        <div className="flex items-center gap-2.5 p-[11px_13px] bg-sf border border-bd rounded-xl cursor-pointer text-tx mb-1.5" onClick={() => setTheme(state.theme === 'dark' ? 'light' : 'dark')}>
           <span className="text-lg leading-none">{state.theme === 'dark' ? '☀️' : '🌙'}</span> <span className="flex-1 text-xs font-semibold">{state.theme === 'dark' ? 'Light' : 'Dark'} Mode</span> 
           <div className={`w-10 h-[22px] rounded-full relative ${state.theme === 'light' ? 'bg-or' : 'bg-bd2'}`}>
             <div className={`absolute top-[2px] left-[2px] w-[18px] h-[18px] rounded-full bg-bg-sec shadow-sm transition-transform ${state.theme === 'light' ? 'translate-x-[18px]' : ''}`}></div>
           </div>
         </div>
-        <div className="flex items-center gap-2.5 p-[11px_13px] bg-sf border border-[rgba(255,90,101,0.1)] rounded-xl cursor-pointer text-[#ff5a65] mb-1.5 active:scale-[0.98] transition-transform" onClick={logout}>
+        <div className="flex items-center gap-2.5 p-[11px_13px] bg-sf border border-[rgba(255,90,101,0.1)] rounded-xl cursor-pointer text-[#ff5a65] mb-1.5" onClick={logout}>
           <Icons.out className="w-[18px] h-[18px]" /> <span className="flex-1 text-xs font-semibold">Logout</span> <Icons.ar className="w-3 h-3 rotate-180" />
         </div>
       </>
@@ -535,19 +560,19 @@ export function ManagerApp() {
             <div className="px-5 pb-5">
               <div className="grid grid-cols-3 gap-1.5 mb-3">
                 <div className="bg-sf border border-bd rounded-[10px] p-2.5 text-center">
-                  <p className="text-[15px] font-bold font-mono text-or">{t.tgt}</p><p className="text-[8px] text-t3 uppercase tracking-[0.06em] font-semibold">Target</p>
+                  <p className="text-[15px] font-bold font-mono text-or"><CountUp end={t.tgt} duration={1} /></p><p className="text-[8px] text-t3 uppercase tracking-[0.06em] font-semibold">Target</p>
                 </div>
                 <div className="bg-sf border border-bd rounded-[10px] p-2.5 text-center">
-                  <p className="text-[15px] font-bold font-mono text-[#2ee89d]">{t.ach}</p><p className="text-[8px] text-t3 uppercase tracking-[0.06em] font-semibold">Achieved</p>
+                  <p className="text-[15px] font-bold font-mono text-[#2ee89d]"><CountUp end={t.ach} duration={1} /></p><p className="text-[8px] text-t3 uppercase tracking-[0.06em] font-semibold">Achieved</p>
                 </div>
                 <div className="bg-sf border border-bd rounded-[10px] p-2.5 text-center">
-                  <p className="text-[15px] font-bold font-mono" style={{ color: p >= 80 ? '#2ee89d' : p >= 50 ? 'var(--color-brand-yl)' : 'var(--color-brand-or)' }}>{p}%</p>
+                  <p className="text-[15px] font-bold font-mono" style={{ color: p >= 80 ? '#2ee89d' : p >= 50 ? 'var(--color-brand-yl)' : 'var(--color-brand-or)' }}><CountUp end={p} duration={1} />%</p>
                   <p className="text-[8px] text-t3 uppercase tracking-[0.06em] font-semibold">Progress</p>
                 </div>
               </div>
               <div className="mb-3.5">
                 <div className="h-2 rounded-full bg-bd overflow-hidden">
-                  <div className="h-full rounded-full" style={{ width: `${Math.min(p, 100)}%`, background: p >= 80 ? '#2ee89d' : p >= 50 ? 'var(--color-brand-yl)' : 'var(--color-brand-or)' }}></div>
+                  <motion.div className="h-full rounded-full" initial={{ width: 0 }} animate={{ width: `${Math.min(p, 100)}%` }} transition={{ duration: 1 }} style={{ background: p >= 80 ? '#2ee89d' : p >= 50 ? 'var(--color-brand-yl)' : 'var(--color-brand-or)' }}></motion.div>
                 </div>
               </div>
               <p className="text-[10px] text-t3 mb-1.5 font-bold uppercase tracking-[0.06em]">IMEI History</p>
@@ -605,13 +630,13 @@ export function ManagerApp() {
                     </button>
                   ))}
                 </div>
-                <button 
-                  className="w-full p-3.5 rounded-xl border-none text-sm font-bold cursor-pointer active:scale-95 transition-transform" 
+                <motion.button whileTap={{ scale: 0.95 }}
+                  className="w-full p-3.5 rounded-xl border-none text-sm font-bold cursor-pointer" 
                   style={{ background: cr ? 'var(--grd-o)' : 'rgba(255,255,255,0.06)', color: cr ? '#fff' : 'var(--color-t3)' }} 
                   disabled={!cr} 
                   onClick={handleRedeem}>
                   {cr ? `Redeem for ${pn} pts` : `Need ${pn - m.pts} more`}
-                </button>
+                </motion.button>
               </div>
             </div>
           </>
@@ -689,11 +714,11 @@ export function ManagerApp() {
           {id:'leaderboard',i:Icons.bar,l:'Rank'},
           {id:'profile',i:Icons.usr,l:'Profile'}
         ].map(t => (
-          <button key={t.id} className={`flex-1 flex flex-col items-center gap-px py-1.5 rounded-[9px] bg-transparent border-0 cursor-pointer relative transition-colors ${tab === t.id ? 'text-or' : 'text-t3'}`} onClick={() => setTab(t.id)}>
+          <motion.button key={t.id} whileTap={{ scale: 0.9 }} className={`flex-1 flex flex-col items-center gap-px py-1.5 rounded-[9px] bg-transparent border-0 cursor-pointer relative transition-colors ${tab === t.id ? 'text-or' : 'text-t3'}`} onClick={() => setTab(t.id)}>
             <div className={`w-[3px] h-[3px] rounded-full bg-or absolute top-[2px] ${tab === t.id ? 'block' : 'hidden'}`}></div>
             <t.i className="w-[18px] h-[18px]" />
             <span className="text-[8px] font-semibold">{t.l}</span>
-          </button>
+          </motion.button>
         ))}
       </div>
       

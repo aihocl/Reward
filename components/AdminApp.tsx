@@ -362,6 +362,20 @@ export function AdminApp() {
       link.setAttribute("download", "manager_report.csv");
       document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
+    else if (a === 'export-imei') {
+      const db = state.db;
+      let csvContent = "data:text/csv;charset=utf-8,IMEI,Manager Name,Manager ID,Store,Area,Model,Upload Date,Status\n";
+      db.pendingImeis.forEach((im: any) => {
+        const mgr = db.mgrs.find((m: any) => m.id === im.mid);
+        const mod = db.models.find((m: any) => m.id === im.model);
+        csvContent += `"${im.imei}","${mgr?.nm || ''}","${im.mid}","${mgr?.store || ''}","${mgr?.area || ''}","${mod?.nm || im.model}","${im.dt}","${im.sts}"\n`;
+      });
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "imei_report.csv");
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
     else if (a === 'export-data-mdls') {
       const db = state.db;
       let csvContent = "data:text/csv;charset=utf-8,Model Name,Model Series,Target,Achieved,Achieved %\n";
@@ -754,12 +768,15 @@ export function AdminApp() {
       <>
         <div className="flex justify-between items-center mb-3 flex-wrap gap-[7px]">
           <h1 className="text-xl font-extrabold text-tx">IMEI Approvals <span className="text-xs text-or font-normal">({pndIm.length} pending)</span></h1>
-          {selIm.length > 0 && (
-            <div className="flex gap-2">
-              <button className="bg-[rgba(46,232,157,0.15)] text-[#2ee89d] border-0 px-3 py-[7px] text-[11px] font-bold rounded-xl cursor-pointer active:scale-95" onClick={() => handleAction('bulk-aim')}>Approve {selIm.length}</button>
-              <button className="bg-[rgba(255,90,101,0.15)] text-[#ff5a65] border-0 px-3 py-[7px] text-[11px] font-bold rounded-xl cursor-pointer active:scale-95" onClick={() => handleAction('bulk-rim')}>Reject {selIm.length}</button>
-            </div>
-          )}
+          <div className="flex gap-2">
+            <button className="bg-transparent border-[1.5px] border-bd2 text-t2 px-3 py-[7px] text-[11px] font-bold rounded-xl flex items-center gap-1 cursor-pointer active:scale-95" onClick={() => handleAction('export-imei')}><Icons.down className="w-3 h-3" /> Export Excel</button>
+            {selIm.length > 0 && (
+              <>
+                <button className="bg-[rgba(46,232,157,0.15)] text-[#2ee89d] border-0 px-3 py-[7px] text-[11px] font-bold rounded-xl cursor-pointer active:scale-95" onClick={() => handleAction('bulk-aim')}>Approve {selIm.length}</button>
+                <button className="bg-[rgba(255,90,101,0.15)] text-[#ff5a65] border-0 px-3 py-[7px] text-[11px] font-bold rounded-xl cursor-pointer active:scale-95" onClick={() => handleAction('bulk-rim')}>Reject {selIm.length}</button>
+              </>
+            )}
+          </div>
         </div>
         <div className="flex gap-2 mb-4">
           <div className="relative flex-1 flex items-center">
